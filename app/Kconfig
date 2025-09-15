@@ -696,6 +696,10 @@ module = ZMK
 module-str = zmk
 source "subsys/logging/Kconfig.template.log_config"
 
+# 2025.09.15 asd START
+rsource "module/Kconfig"
+# 2025.09.15 asd END
+
 # This loads ZMK's internal board and shield Kconfigs
 rsource "boards/Kconfig"
 rsource "boards/shields/*/Kconfig.defconfig"
