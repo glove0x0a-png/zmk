@@ -45,6 +45,9 @@ target_sources_ifdef(CONFIG_ZMK_EXT_POWER app PRIVATE src/behaviors/behavior_ext
 target_sources_ifdef(CONFIG_ZMK_BEHAVIOR_SOFT_OFF app PRIVATE src/behaviors/behavior_soft_off.c)
 add_subdirectory_ifdef(CONFIG_ZMK_POINTING src/pointing/)
 if ((NOT CONFIG_ZMK_SPLIT) OR CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+  #2025.09.17start
+  target_sources_ifdef(CONFIG_ZMK_HID_INDICATORS app PRIVATE src/behaviors/behavior_capslock_led.c)
+  #2025.09.17end
   target_sources(app PRIVATE src/hid.c)
   target_sources(app PRIVATE src/behaviors/behavior_key_press.c)
   target_sources_ifdef(CONFIG_ZMK_BEHAVIOR_KEY_TOGGLE app PRIVATE src/behaviors/behavior_key_toggle.c)
