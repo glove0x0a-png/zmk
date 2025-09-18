@@ -5,9 +5,7 @@ properties:
 
   direction:
     type: int
-    required: false
-    description: |
-      Direction value used to reverse sensor behavior. Positive or negative integer.
+    required: true
 
 sensor-binding-cells:
   - param1
