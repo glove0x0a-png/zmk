@@ -2,6 +2,7 @@
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zmk/behavior.h>
 #include <zmk/events/sensor_event.h>
 #include <zmk/hid.h>
 
@@ -17,7 +18,7 @@ static int sensor_rev_if_ctrl_handler(const struct device *dev,
                                       struct zmk_sensor_binding_data *data) {
     // HIDレポートから修飾キー状態を取得
     const struct zmk_hid_keyboard_report *report = zmk_hid_get_keyboard_report();
-    bool ctrl_active = (report->modifiers & MOD_LCTRL) != 0;
+    bool ctrl_active = (report->body.modifiers & MOD_LCTRL) != 0;
 
     // センサーのY軸加速度（仮定）からスクロール量を算出
     int16_t accel_y = event->channel_data[1].value;
