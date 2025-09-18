@@ -44,4 +44,14 @@ static int behavior_sensor_reverse_if_ctrl_binding_released(struct zmk_behavior_
     return ZMK_EV_EVENT_HANDLED;
 }
 
-static const struct behavior_driver_api behavior
+static const struct behavior_driver_api behavior_sensor_reverse_if_ctrl_driver = {
+    .binding_pressed = behavior_sensor_reverse_if_ctrl_binding_pressed,
+    .binding_released = behavior_sensor_reverse_if_ctrl_binding_released,
+};
+
+DEVICE_DT_INST_DEFINE(0, NULL, NULL, NULL,
+                      &(struct behavior_sensor_reverse_if_ctrl_config){
+                          .direction = DT_INST_PROP(0, direction),
+                      },
+                      POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
+                      &behavior_sensor_reverse_if_ctrl_driver);
