@@ -20,10 +20,10 @@ static int sensor_rev_if_ctrl_handler(const struct device *dev,
     const struct sensor_rev_cfg *cfg = dev->config;
     int direction = cfg->direction;
 
-    bool ctrl_active = zmk_keymap_mods() & MOD_LCTRL;
+    bool ctrl_active = zmk_hid_get_explicit_mods() & MOD_LCTRL;
     int final_direction = ctrl_active ? -direction : direction;
 
-    zmk_hid_mouse_scroll_set(final_direction);
+    zmk_hid_mouse_scroll_set(0,final_direction);
     return 0;
 }
 
