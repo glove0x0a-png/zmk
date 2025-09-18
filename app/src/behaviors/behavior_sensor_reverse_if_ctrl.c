@@ -5,6 +5,7 @@
 #include <zmk/behavior.h>
 #include <zmk/events/sensor_event.h>
 #include <zmk/hid.h>
+#include <drivers/sensor.h>
 
 LOG_MODULE_REGISTER(sensor_rev_if_ctrl, LOG_LEVEL_DBG);
 
@@ -14,18 +15,14 @@ LOG_MODULE_REGISTER(sensor_rev_if_ctrl, LOG_LEVEL_DBG);
 
 static int sensor_rev_if_ctrl_handler(const struct device *dev,
                                       const struct zmk_behavior_binding *binding,
-                                      const struct zmk_sensor_event *event,
-                                      struct zmk_sensor_binding_data *data) {
+                                      const struct zmk_sensor_event *event) {
     // HIDレポートから修飾キー状態を取得
     const struct zmk_hid_keyboard_report *report = zmk_hid_get_keyboard_report();
     bool ctrl_active = (report->body.modifiers & MOD_LCTRL) != 0;
 
     // センサーのY軸加速度（仮定）からスクロール量を算出
-    int16_t accel_y = event->channel_data[1].value;
-    int scroll_amount = accel_y / 100;
-
-    // Ctrlが押されていればスクロール方向を反転
-    int final_direction = ctrl_active ? -scroll_amount : scroll_amount;
+    double accel_y = event->channel_data[1].value;
+    int scroll_amount = (int)(accel_y * 10);
 
     // スクロール送信（Y方向）
     if (final_direction != 0) {
