@@ -15,7 +15,7 @@ static int capslock_handler(const zmk_event_t *eh) {
     }
 
     bool caps = ev->indicators & HID_KBD_LED_CAPS_LOCK;
-    gpio_pin_set_dt(&caps_led, caps ? 0 : 1);
+    gpio_pin_set_dt(&caps_led, caps ? 1 : 0);
 
     return ZMK_EV_EVENT_HANDLED;
 }
