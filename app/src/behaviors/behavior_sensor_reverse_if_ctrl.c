@@ -1,3 +1,4 @@
+#include <drivers/behavior.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/kernel.h>
@@ -16,7 +17,8 @@ struct sensor_rev_cfg {
 
 static int sensor_rev_if_ctrl_handler(const struct device *dev,
                                       const struct zmk_behavior_binding *binding,
-                                      const struct zmk_sensor_event *event) {
+                                      const struct zmk_sensor_event *event,
+                                      struct zmk_sensor_binding_data *data) {
     const struct sensor_rev_cfg *cfg = dev->config;
     int direction = cfg->direction;
 
