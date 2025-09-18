@@ -7,6 +7,10 @@
 #include <zmk/hid.h>
 #include <zmk/modifiers.h>
 
+#ifndef MOD_LCTRL
+#define MOD_LCTRL (1 << 0) // ZMKでは通常このビットが左Ctrlに対応
+#endif
+
 struct sensor_rev_cfg {
     int direction;
 };
