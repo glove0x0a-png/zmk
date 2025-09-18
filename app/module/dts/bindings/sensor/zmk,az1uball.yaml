@@ -7,7 +7,7 @@ compatible: "zmk,az1uball"
 properties:
   label:
     type: string
-    required: true
+    required: false
     description: Human-readable name for the device
 
   reg:
