@@ -28,7 +28,7 @@ static int sensor_rev_if_ctrl_handler(const struct device *dev,
 }
 
 static const struct behavior_driver_api sensor_rev_if_ctrl_driver_api = {
-    .sensor_triggered = sensor_rev_if_ctrl_handler,
+    .sensor_binding_process = sensor_rev_if_ctrl_handler,
 };
 
 #define DT_DRV_COMPAT zmk_behavior_sensor_reverse_if_ctrl
