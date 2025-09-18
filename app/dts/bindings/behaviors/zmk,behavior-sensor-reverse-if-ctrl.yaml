@@ -1,27 +1,13 @@
-description: |
-  Sensor Reverse If Ctrl Behavior.
-  Reverses scroll direction when Ctrl is active. Used for rotary encoder sensor-bindings.
+# Copyright (c) 2025 tさん
+# SPDX-License-Identifier: MIT
 
-compatible: "zmk,behavior-sensor-reverse-if-ctrl"
+compatible: "zmk_behavior_sensor_reverse_if_ctrl"
 
-properties:
-  label:
-    type: string
-    required: true
-    description: Human-readable label for the behavior.
+description: >
+  Sensor behavior that scrolls based on sensor input and reverses direction when Ctrl is held.
 
-  direction:
-    type: int
-    required: true
-    description: |
-      Scroll direction this node represents.
-      Use 1 for normal (e.g. CW = scroll up), -1 for reversed (e.g. CCW = scroll down).
+type: behavior
 
-  bindings:
-    type: phandle
-    required: false
-    description: |
-      Dummy binding required for Devicetree validation.
-      Use <&none> if behavior is handled entirely in C code.
+include: base.yaml
 
-sensor-binding-cells: []
+properties: {}
