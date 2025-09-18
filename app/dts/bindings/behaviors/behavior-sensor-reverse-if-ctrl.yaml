@@ -1,3 +1,10 @@
-description: Sensor behavior that reverses direction if Ctrl is held
-compatible: "zmk,behavior-sensor-reverse-if-ctrl"
-include: base.yaml
+properties:
+  label:
+    type: string
+    required: true
+
+  direction:
+    type: int
+    required: false
+    description: |
+      Direction value used to reverse sensor behavior. Positive or negative integer.
