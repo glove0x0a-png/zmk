@@ -134,6 +134,4 @@ if (CONFIG_ZMK_STUDIO_RPC)
   add_subdirectory(src/studio)
 endif()
 
-add_subdirectory("../../modules/az1uball")
-
 zephyr_cc_option(-Wfatal-errors)
