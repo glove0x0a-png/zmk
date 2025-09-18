@@ -11,5 +11,5 @@ properties:
     type: phandle-array
     required: false
     description: Dummy binding required by Devicetree parser.
-
+binding-cells: [] 
 sensor-binding-cells: [] 
