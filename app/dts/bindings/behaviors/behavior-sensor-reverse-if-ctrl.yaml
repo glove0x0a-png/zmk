@@ -1,0 +1,3 @@
+description: Sensor behavior that reverses direction if Ctrl is held
+compatible: "zmk,behavior-sensor-reverse-if-ctrl"
+include: base.yaml
