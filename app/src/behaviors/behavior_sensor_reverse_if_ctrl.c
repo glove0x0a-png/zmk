@@ -2,6 +2,7 @@
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/drivers/sensor.h>
 #include <zmk/behavior.h>
 #include <zmk/events/sensor_event.h>
 #include <zmk/hid.h>
@@ -20,7 +21,7 @@ static int sensor_rev_if_ctrl_handler(const struct device *dev,
     bool ctrl_active = (report->body.modifiers & MOD_LCTRL) != 0;
 
     // センサーのY軸加速度（仮定）からスクロール量を算出
-    double accel_y = event->channel_data[1].value;
+    double accel_y = sensor_value_to_double(&event->channel_data[1]);
     int scroll_amount = (int)(accel_y * 10);
 
     // スクロール送信（Y方向）
