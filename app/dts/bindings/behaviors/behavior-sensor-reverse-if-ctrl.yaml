@@ -12,4 +12,4 @@ properties:
     required: false
     description: Dummy binding required by Devicetree parser.
 
-sensor-binding-cells: []  # ✅ 引数なし
+sensor-binding-cells: [] 
