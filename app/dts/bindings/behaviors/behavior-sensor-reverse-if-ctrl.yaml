@@ -8,3 +8,6 @@ properties:
     required: false
     description: |
       Direction value used to reverse sensor behavior. Positive or negative integer.
+
+sensor-binding-cells:
+  - param1
