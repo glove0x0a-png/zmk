@@ -10,5 +10,6 @@ rsource "max17048/Kconfig"
 rsource "encoder_mock/Kconfig"
 
 rsource "trackball_pim447/Kconfig"
+rsource "az1uball/Kconfig"
 
 endif # SENSOR
