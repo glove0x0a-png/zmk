@@ -1,11 +1,9 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/kernel.h>
-
 #include <zmk/behavior.h>
 #include <zmk/events/sensor_event.h>
 #include <zmk/hid.h>
-#include <zmk/modifiers.h>
 
 #ifndef MOD_LCTRL
 #define MOD_LCTRL (1 << 0) // ZMKでは通常このビットが左Ctrlに対応
