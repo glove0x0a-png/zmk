@@ -148,6 +148,7 @@ jobs:
           fi
 
       - name: Upload zephyr.dts
+        if: ${{ always() }}
         uses: actions/upload-artifact@v3
         with:
           name: zephyr-dts
