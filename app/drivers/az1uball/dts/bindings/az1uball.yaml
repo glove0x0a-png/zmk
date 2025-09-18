@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MIT
+
+description: Driver for az1uball I2C trackball
+
+compatible: "zmk,az1uball"
+
+properties:
+  reg:
+    type: int
+    required: true
+    description: I2C address of the az1uball device
+
+  default_mode:
+    type: string
+    required: false
+    description: Default mode ("mouse" or "scroll") at startup
+
+  sensitivity:
+    type: string
+    required: false
+    description: Sensitivity multiplier ("1x", "2x", "4x")
