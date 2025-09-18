@@ -14,13 +14,9 @@ struct sensor_rev_cfg {
     int direction;
 };
 
-static int sensor_rev_if_ctrl_handler(const struct zmk_behavior_binding *binding,
+static int sensor_rev_if_ctrl_handler(const struct device *dev,
+                                      const struct zmk_behavior_binding *binding,
                                       const struct zmk_sensor_event *event) {
-    const struct device *dev = binding->device;
-    if (!dev) {
-        return -ENODEV;
-    }
-
     const struct sensor_rev_cfg *cfg = dev->config;
     int direction = cfg->direction;
 
