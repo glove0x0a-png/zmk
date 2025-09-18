@@ -1,4 +1,5 @@
 
 rsource "drivers/Kconfig"
 rsource "lib/Kconfig"
-source "modules/az1uball/Kconfig"
+
+source "../../../modules/az1uball/Kconfig"
