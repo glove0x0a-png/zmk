@@ -15,20 +15,27 @@
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
+struct behavior_sensor_reverse_if_ctrl_config {
+    int direction;
+};
+
 static int behavior_sensor_reverse_if_ctrl_binding_pressed(struct zmk_behavior_binding *binding,
                                                            struct zmk_behavior_binding_event event) {
-    int direction = event.param1; // CW = 1, CCW = -1（センサー定義に依存）
+    const struct device *dev = device_get_binding(binding->behavior_dev);
+    const struct behavior_sensor_reverse_if_ctrl_config *cfg = dev->config;
 
+    int sensor_direction = event.param1;
     bool ctrl_active = zmk_keymap_is_active(ZMK_HID_USAGE_KEY_LEFT_CONTROL);
 
-    int effective_direction = ctrl_active ? -direction : direction;
+    int effective_direction = ctrl_active ? -cfg->direction : cfg->direction;
+    int final_direction = effective_direction * sensor_direction;
 
-    uint16_t usage = effective_direction > 0
+    uint16_t usage = final_direction > 0
                          ? HID_USAGE_CONSUMER_VOLUME_INCREMENT
                          : HID_USAGE_CONSUMER_VOLUME_DECREMENT;
 
-    LOG_DBG("Sensor direction: %d, Ctrl active: %d, Effective: %d, Usage: 0x%04X",
-            direction, ctrl_active, effective_direction, usage);
+    LOG_DBG("Sensor: %d, Config: %d, Ctrl: %d → Final: %d → Usage: 0x%04X",
+            sensor_direction, cfg->direction, ctrl_active, final_direction, usage);
 
     zmk_hid_consumer_press(usage);
     return ZMK_EV_EVENT_HANDLED;
@@ -36,13 +43,16 @@ static int behavior_sensor_reverse_if_ctrl_binding_pressed(struct zmk_behavior_b
 
 static int behavior_sensor_reverse_if_ctrl_binding_released(struct zmk_behavior_binding *binding,
                                                             struct zmk_behavior_binding_event event) {
-    int direction = event.param1;
+    const struct device *dev = device_get_binding(binding->behavior_dev);
+    const struct behavior_sensor_reverse_if_ctrl_config *cfg = dev->config;
 
+    int sensor_direction = event.param1;
     bool ctrl_active = zmk_keymap_is_active(ZMK_HID_USAGE_KEY_LEFT_CONTROL);
 
-    int effective_direction = ctrl_active ? -direction : direction;
+    int effective_direction = ctrl_active ? -cfg->direction : cfg->direction;
+    int final_direction = effective_direction * sensor_direction;
 
-    uint16_t usage = effective_direction > 0
+    uint16_t usage = final_direction > 0
                          ? HID_USAGE_CONSUMER_VOLUME_INCREMENT
                          : HID_USAGE_CONSUMER_VOLUME_DECREMENT;
 
@@ -55,6 +65,9 @@ static const struct behavior_driver_api behavior_sensor_reverse_if_ctrl_driver =
     .binding_released = behavior_sensor_reverse_if_ctrl_binding_released,
 };
 
-DEVICE_DT_INST_DEFINE(0, NULL, NULL, NULL, NULL, POST_KERNEL,
-                      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
+DEVICE_DT_INST_DEFINE(0, NULL, NULL, NULL,
+                      &(struct behavior_sensor_reverse_if_ctrl_config){
+                          .direction = DT_INST_PROP(0, direction),
+                      },
+                      POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
                       &behavior_sensor_reverse_if_ctrl_driver);
