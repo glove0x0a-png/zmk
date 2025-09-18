@@ -14,8 +14,8 @@ struct sensor_rev_cfg {
 };
 
 static int sensor_rev_if_ctrl_handler(const struct zmk_behavior_binding *binding,
-                                      const struct sensor_event *event) {
-    const struct device *dev = zmk_behavior_get_binding_device(binding);
+                                      const struct zmk_sensor_event *event) {
+    const struct device *dev = binding->device;
     if (!dev) {
         return -ENODEV;
     }
