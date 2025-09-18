@@ -49,6 +49,12 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.matrix.outputs.build_matrix) }}
     steps:
+      - name: Checkout ZMK fork
+        uses: actions/checkout@v4
+        with:
+          repository: glove0x0a-png/zmk
+          path: zmk
+
       - name: Checkout
         uses: actions/checkout@v4
 
