@@ -7,5 +7,9 @@ properties:
     type: int
     required: true
 
-sensor-binding-cells:
-  - param1
+  bindings:
+    type: phandle-array
+    required: false
+    description: Dummy binding required by Devicetree parser.
+
+sensor-binding-cells: []  # ✅ 引数なし
