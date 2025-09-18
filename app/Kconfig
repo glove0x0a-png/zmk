@@ -245,6 +245,8 @@ endmenu # Output Types
 
 endmenu # HID
 
+source "../../modules/az1uball/Kconfig"
+
 rsource "src/split/Kconfig"
 
 endmenu # Basic Keyboard Setup
