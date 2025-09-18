@@ -4,6 +4,7 @@
 #include <zmk/behavior.h>
 #include <zmk/events/sensor_event.h>
 #include <zmk/hid.h>
+#include <zmk/keymap.h> // ← これが必要
 
 #ifndef MOD_LCTRL
 #define MOD_LCTRL (1 << 0) // ZMKでは通常このビットが左Ctrlに対応
@@ -23,15 +24,15 @@ static int sensor_rev_if_ctrl_handler(const struct zmk_behavior_binding *binding
     const struct sensor_rev_cfg *cfg = dev->config;
     int direction = cfg->direction;
 
-    bool ctrl_active = zmk_mods_active() & MOD_LCTRL;
+    bool ctrl_active = zmk_keymap_mods() & MOD_LCTRL;
     int final_direction = ctrl_active ? -direction : direction;
 
-    zmk_hid_mouse_scroll(final_direction);
+    zmk_hid_mouse_scroll_set(final_direction);
     return 0;
 }
 
 static const struct behavior_driver_api sensor_rev_if_ctrl_driver_api = {
-    .sensor_binding_triggered = sensor_rev_if_ctrl_handler,
+    .sensor_triggered = sensor_rev_if_ctrl_handler,
 };
 
 #define DT_DRV_COMPAT zmk_behavior_sensor_reverse_if_ctrl
