@@ -30,44 +30,18 @@ static int behavior_sensor_reverse_if_ctrl_binding_pressed(struct zmk_behavior_b
     int effective_direction = ctrl_active ? -cfg->direction : cfg->direction;
     int final_direction = effective_direction * sensor_direction;
 
-    uint16_t usage = final_direction > 0
-                         ? HID_USAGE_CONSUMER_VOLUME_INCREMENT
-                         : HID_USAGE_CONSUMER_VOLUME_DECREMENT;
+    LOG_DBG("Sensor: %d, Config: %d, Ctrl: %d → Final: %d",
+            sensor_direction, cfg->direction, ctrl_active, final_direction);
 
-    LOG_DBG("Sensor: %d, Config: %d, Ctrl: %d → Final: %d → Usage: 0x%04X",
-            sensor_direction, cfg->direction, ctrl_active, final_direction, usage);
-
-    zmk_hid_consumer_press(usage);
+    // 垂直スクロール（Y方向）
+    zmk_hid_mouse_scroll(final_direction, 0);
     return ZMK_EV_EVENT_HANDLED;
 }
 
 static int behavior_sensor_reverse_if_ctrl_binding_released(struct zmk_behavior_binding *binding,
                                                             struct zmk_behavior_binding_event event) {
-    const struct device *dev = device_get_binding(binding->behavior_dev);
-    const struct behavior_sensor_reverse_if_ctrl_config *cfg = dev->config;
-
-    int sensor_direction = event.param1;
-    bool ctrl_active = zmk_keymap_is_active(ZMK_HID_USAGE_KEY_LEFT_CONTROL);
-
-    int effective_direction = ctrl_active ? -cfg->direction : cfg->direction;
-    int final_direction = effective_direction * sensor_direction;
-
-    uint16_t usage = final_direction > 0
-                         ? HID_USAGE_CONSUMER_VOLUME_INCREMENT
-                         : HID_USAGE_CONSUMER_VOLUME_DECREMENT;
-
-    zmk_hid_consumer_release(usage);
+    // スクロールは press/release で分離しないため、release は何もしない
     return ZMK_EV_EVENT_HANDLED;
 }
 
-static const struct behavior_driver_api behavior_sensor_reverse_if_ctrl_driver = {
-    .binding_pressed = behavior_sensor_reverse_if_ctrl_binding_pressed,
-    .binding_released = behavior_sensor_reverse_if_ctrl_binding_released,
-};
-
-DEVICE_DT_INST_DEFINE(0, NULL, NULL, NULL,
-                      &(struct behavior_sensor_reverse_if_ctrl_config){
-                          .direction = DT_INST_PROP(0, direction),
-                      },
-                      POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
-                      &behavior_sensor_reverse_if_ctrl_driver);
+static const struct behavior_driver_api behavior
