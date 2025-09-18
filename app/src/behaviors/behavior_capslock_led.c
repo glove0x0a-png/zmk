@@ -3,6 +3,10 @@
 #include <zmk/event_manager.h>
 #include <zmk/events/hid_indicators_changed.h>
 
+#define HID_KBD_LED_NUM_LOCK    0x01
+#define HID_KBD_LED_CAPS_LOCK   0x02
+#define HID_KBD_LED_SCROLL_LOCK 0x04
+
 #define CAPS_LED_NODE DT_ALIAS(led_red)
 
 static const struct gpio_dt_spec caps_led = GPIO_DT_SPEC_GET(CAPS_LED_NODE, gpios);
