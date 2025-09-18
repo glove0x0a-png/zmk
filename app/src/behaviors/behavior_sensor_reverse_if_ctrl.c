@@ -5,7 +5,6 @@
 #include <zmk/behavior.h>
 #include <zmk/events/sensor_event.h>
 #include <zmk/hid.h>
-#include <drivers/sensor.h>
 
 LOG_MODULE_REGISTER(sensor_rev_if_ctrl, LOG_LEVEL_DBG);
 
