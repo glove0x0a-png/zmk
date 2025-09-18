@@ -1,6 +1,7 @@
-title: Sensor Reverse If Ctrl Behavior
 description: |
+  Sensor Reverse If Ctrl Behavior.
   Reverses scroll direction when Ctrl is active. Used for rotary encoder sensor-bindings.
+
 compatible: "zmk,behavior-sensor-reverse-if-ctrl"
 
 properties:
