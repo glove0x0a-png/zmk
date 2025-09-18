@@ -146,6 +146,13 @@ jobs:
           else
             echo "No Devicetree output"
           fi
+
+      - name: Upload zephyr.dts
+        uses: actions/upload-artifact@v3
+        with:
+          name: zephyr-dts
+          path: ${{ env.build_dir }}/zephyr/zephyr.dts
+
         if: ${{ !cancelled() }}
 
       - name: Rename artifacts
