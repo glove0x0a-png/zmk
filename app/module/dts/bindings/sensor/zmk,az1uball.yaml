@@ -5,6 +5,11 @@ description: Driver for az1uball I2C trackball
 compatible: "zmk,az1uball"
 
 properties:
+  label:
+    type: string
+    required: true
+    description: Human-readable name for the device
+
   reg:
     type: int
     required: true
