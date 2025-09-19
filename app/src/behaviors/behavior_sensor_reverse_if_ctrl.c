@@ -21,8 +21,9 @@ static int sensor_rev_if_ctrl_handler(const struct device *dev,
     bool ctrl_active = (report->body.modifiers & MOD_LCTRL) != 0;
 
     // センサーのY軸加速度（仮定）からスクロール量を算出
-    double accel_y = sensor_value_to_double(&event->channel_data[1]);
+    double accel_y = sensor_value_to_double(&event->channel_data[1].value);
     int scroll_amount = (int)(accel_y * 10);
+    int final_direction = ctrl_active ? -scroll_amount : scroll_amount;
 
     // スクロール送信（Y方向）
     if (final_direction != 0) {
