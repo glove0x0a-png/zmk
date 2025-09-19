@@ -30,8 +30,8 @@ volatile float AZ1UBALL_SCROLL_SMOOTHING_FACTOR = 0.5f;
 
 static enum az1uball_mode current_mode = AZ1UBALL_MODE_MOUSE;
 
-static void activate_automouse_layer();
-static void deactivate_automouse_layer(struct k_timer *timer);
+//static void activate_automouse_layer();
+//static void deactivate_automouse_layer(struct k_timer *timer);
 
 static int previous_x = 0;
 static int previous_y = 0;
