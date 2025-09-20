@@ -3,7 +3,6 @@
 #include <zephyr/device.h>
 //debug
 #include <zephyr/drivers/gpio.h>
-#include <zmk/event_manager.h>
 //debug
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/i2c.h>
