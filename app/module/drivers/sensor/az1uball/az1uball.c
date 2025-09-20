@@ -179,12 +179,10 @@ void az1uball_read_data_work(struct k_work *work)
     int16_t delta_y = (int16_t)buf[3] - (int16_t)buf[2]; // DOWN - UP
 
     //start●●
-    uint32_t start_time=k_uptime_get();
-    gpio_pin_set_dt(&my_led, 1);
-    while(k_uptime_get()-start_time < 2000){};
-    gpio_pin_set_dt(&my_led, 0);
+    uint32_t start_time;
+    gpio_pin_set_dt(&my_led, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
+    gpio_pin_set_dt(&my_led, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
     //end
-
     /* Report movement immediately if non-zero */
     if (delta_x != 0 || delta_y != 0) {
 //        if (current_mode == AZ1UBALL_MODE_MOUSE) {
@@ -195,10 +193,8 @@ void az1uball_read_data_work(struct k_work *work)
                 ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x, true, K_NO_WAIT);
                 //start●●
                 if(ret){
-                     uint32_t start_time=k_uptime_get();
-                     gpio_pin_set_dt(&my_green, 1);
-                     while(k_uptime_get()-start_time < 2000){};
-                     gpio_pin_set_dt(&my_green, 0);
+                     gpio_pin_set_dt(&my_green, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
+                     gpio_pin_set_dt(&my_green, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
                 }
                 //end
             }
@@ -217,10 +213,8 @@ void az1uball_read_data_work(struct k_work *work)
         ret = input_report_key(data->dev, INPUT_BTN_0, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         //start●●
         if(ret){
-             uint32_t start_time=k_uptime_get();
-             gpio_pin_set_dt(&my_blue, 1);
-             while(k_uptime_get()-start_time < 2000){};
-             gpio_pin_set_dt(&my_blue, 0);
+             gpio_pin_set_dt(&my_blue, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
+             gpio_pin_set_dt(&my_blue, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
          }
           //end
         data->sw_pressed_prev = data->sw_pressed;
