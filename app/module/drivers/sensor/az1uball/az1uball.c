@@ -73,7 +73,7 @@ static int az1uball_init(const struct device *dev)
     /* Check if the I2C device is ready */
     if (!device_is_ready(config->i2c.bus)) {
         //i2c準備不足・init起動で緑5回、2秒おきに点滅
-        uint32_t start_time=k_uptime_get();
+        start_time=k_uptime_get();
         for(i=0;i<5;i++){
           gpio_pin_set_dt(&my_green, 1);
           while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
