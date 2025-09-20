@@ -1,9 +1,3 @@
-/*
- * Copyright (c) 2022 The ZMK Contributors
- *
- * SPDX-License-Identifier: MIT
- */
-
 #define DT_DRV_COMPAT zmk_az1uball
 
 #include <zephyr/device.h>
@@ -13,9 +7,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include "az1uball.h"
-
-//#include <zephyr/logging/log.h>
-//LOG_MODULE_REGISTER(az1uball, LOG_LEVEL_DBG);
 
 volatile uint8_t AZ1UBALL_MOUSE_MAX_SPEED = 25;
 volatile uint8_t AZ1UBALL_MOUSE_MAX_TIME = 5;
@@ -33,31 +24,14 @@ volatile float AZ1UBALL_SCROLL_SMOOTHING_FACTOR = 0.5f;
 static int previous_x = 0;
 static int previous_y = 0;
 static enum az1uball_mode current_mode = AZ1UBALL_MODE_MOUSE;//default:mouse
-//static       struct az1uball_data     az1uball_data_##n;		(データ)
-//static const struct az1uball_config   az1uball_config_##n;	(コンフィグ)
-
-//prototype
-//DEVICE_DT_INST_DEFINE
-//    az1uball_init
-//      + k_work_init(&data->work, az1uball_read_data_work);
-//          + az1uball_read_data_work
-//              + az1uball_process_movement
-//                   + parse_sensitivity
-//      + k_timer_init(&data->polling_timer, az1uball_polling, NULL);
-//          + az1uball_polling
-//              + check_power_mode
-//      + k_timer_start
 
 static int az1uball_init(const struct device *dev);					//初期化処理
-//void az1uball_toggle_mode(void);
 static float parse_sensitivity(const char *sensitivity);			//プロパティからマウス精度を変更
 static void check_power_mode(         struct az1uball_data *data);	//LOW_POWER_TIMEOUT_MSを参照し、省電力モードへ
 static void az1uball_process_movement(struct az1uball_data *data,	//マウス動作、az1uball_data構造体を更新
 	int delta_x,int delta_y, uint32_t time_between_interrupts,
 	int max_speed, int max_time, float smoothing_factor);
 void az1uball_read_data_work(struct k_work *work);					//i2c_read_dtあり。I2C通信でデータ取り出し。
-																	// input_report_rel。
-																	// input_report_key。
 static void az1uball_polling(struct k_timer *timer);
 
 ///////////////////////////////////////////////////////////////////////////
@@ -87,6 +61,12 @@ static int az1uball_init(const struct device *dev)
         return ret;
     }
 
+    // 2025.09.20 ✅ 追加：inputデバイスとして登録
+    input_device_register(dev);
+    // 2025.09.20 ✅ 追加：デバイスを有効化
+    input_device_set_enabled(dev, true);
+
+
     k_work_init(&data->work, az1uball_read_data_work);
 
     data->last_activity_time = k_uptime_get();
@@ -95,24 +75,8 @@ static int az1uball_init(const struct device *dev)
     k_timer_init(&data->polling_timer, az1uball_polling, NULL);
     k_timer_start(&data->polling_timer, NORMAL_POLL_INTERVAL, NORMAL_POLL_INTERVAL);
 
-    // デフォルトモードの設定
-    //if (strcmp(config->default_mode, "scroll") == 0) {
-    //    az1uball_toggle_mode();
-    //}
-
     return 0;
 }
-
-
-//static void activate_automouse_layer();
-//static void deactivate_automouse_layer(struct k_timer *timer);
-
-
-//void az1uball_toggle_mode(void) {
-//    current_mode = (current_mode == AZ1UBALL_MODE_MOUSE) ? AZ1UBALL_MODE_SCROLL : AZ1UBALL_MODE_MOUSE;
-//    // Optional: Add logging or LED indication here to show the current mode
-//    //LOG_DBG("AZ1UBALL mode switched to %s", (current_mode == AZ1UBALL_MODE_MOUSE) ? "MOUSE" : "SCROLL");
-//}
 
 static float parse_sensitivity(const char *sensitivity) {
     float value;
@@ -231,29 +195,6 @@ void az1uball_read_data_work(struct k_work *work)
                     //LOG_DBG("Reported delta_y: %d", data->smoothed_y);
                 }
             }
-//        } else if (current_mode == AZ1UBALL_MODE_SCROLL) {
-//            az1uball_process_movement(data, delta_x, delta_y, time_between_interrupts, AZ1UBALL_SCROLL_MAX_SPEED, AZ1UBALL_SCROLL_MAX_TIME, AZ1UBALL_SCROLL_SMOOTHING_FACTOR);
-//
-//            /* Report relative X movement */
-//            if (delta_x != 0) {
-//                ret = input_report_rel(data->dev, INPUT_REL_WHEEL, data->smoothed_x, true, K_NO_WAIT);
-//                if (ret) {
-//                    //LOG_ERR("Failed to report delta_x: %d", ret);
-//                } else {
-//                    //LOG_DBG("Reported delta_x: %d", data->smoothed_x);
-//                }
-//            }
-//
-//            /* Report relative Y movement */
-//            if (delta_y != 0) {
-//                ret = input_report_rel(data->dev, INPUT_REL_HWHEEL, data->smoothed_y, true, K_NO_WAIT);
-//                if (ret) {
-//                    //LOG_ERR("Failed to report delta_y: %d", ret);
-//                } else {
-//                    //LOG_DBG("Reported delta_y: %d", data->smoothed_y);
-//                }
-//            }
-//        }
     }
 
     /* Update switch state */
