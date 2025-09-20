@@ -52,17 +52,17 @@ static void az1uball_polling(struct k_timer *timer);
 /* Initialization of AZ1UBALL */
 static int az1uball_init(const struct device *dev)
 {
-    //起動確認・init起動で赤5回、2秒おきに点滅
-    uint32_t start_time=k_uptime_get();
-    for(int i=0;i<5;i++){
-      gpio_pin_set_dt(&my_led, 1);
-      while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
-      start_time=k_uptime_get();
-      gpio_pin_set_dt(&my_led, 0);
-      while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
-      start_time=k_uptime_get();
-    }
-    //ここまで
+    //●●起動確認・init起動で赤5回、2秒おきに点滅-OK from 332●●●●●●
+    //uint32_t start_time=k_uptime_get();
+    //for(int i=0;i<5;i++){
+    //  gpio_pin_set_dt(&my_led, 1);
+    //  while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+    //  start_time=k_uptime_get();
+    //  gpio_pin_set_dt(&my_led, 0);
+    //  while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+    //  start_time=k_uptime_get();
+    //}
+    //●●//ここまで
     struct az1uball_data *data = dev->data;
     const struct az1uball_config *config = dev->config;
     int ret;
@@ -71,17 +71,17 @@ static int az1uball_init(const struct device *dev)
 
     /* Check if the I2C device is ready */
     if (!device_is_ready(config->i2c.bus)) {
-        //i2c準備不足・init起動で緑5回、2秒おきに点滅
-        start_time=k_uptime_get();
-        for(int i=0;i<5;i++){
-          gpio_pin_set_dt(&my_green, 1);
-          while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
-          start_time=k_uptime_get();
-          gpio_pin_set_dt(&my_green, 0);
-          while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
-          start_time=k_uptime_get();
-        }
-        //ここまで
+        //●●skip-from 332_OK_i2c準備不足・init起動で緑5回、2秒おきに点滅●●
+        //start_time=k_uptime_get();
+        //for(int i=0;i<5;i++){
+        //  gpio_pin_set_dt(&my_green, 1);
+        //  while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+        //  start_time=k_uptime_get();
+        //  gpio_pin_set_dt(&my_green, 0);
+        //  while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+        //  start_time=k_uptime_get();
+        //}
+        //●●//ここまで
         return -ENODEV;
     }
 
@@ -134,17 +134,17 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
     float scaling_factor = sensitivity;  // 基本のスケーリングファクターを感度に設定
 
 
-        //プロセスムーブ・青
-        uint32_t start_time=k_uptime_get();
-        for(int i=0;i<5;i++){
-          gpio_pin_set_dt(&my_blue, 1);
-          while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
-          start_time=k_uptime_get();
-          gpio_pin_set_dt(&my_blue, 0);
-          while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
-          start_time=k_uptime_get();
-        }
-        //ここまで
+        //●●プロセスムーブ・青-起動OK
+        //uint32_t start_time=k_uptime_get();
+        //for(int i=0;i<5;i++){
+        //  gpio_pin_set_dt(&my_blue, 1);
+        //  while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+        //  start_time=k_uptime_get();
+        //  gpio_pin_set_dt(&my_blue, 0);
+        //  while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+        //  start_time=k_uptime_get();
+        //}
+        //●●//ここまで
 
 
     if (time_between_interrupts < max_time) {
@@ -209,6 +209,13 @@ void az1uball_read_data_work(struct k_work *work)
     int16_t delta_x = (int16_t)buf[1] - (int16_t)buf[0]; // RIGHT - LEFT
     int16_t delta_y = (int16_t)buf[3] - (int16_t)buf[2]; // DOWN - UP
 
+                //start
+                     uint32_t start_time=k_uptime_get();
+                     gpio_pin_set_dt(&my_led, 1);
+                     while(k_uptime_get()-start_time < 2000){};
+                     gpio_pin_set_dt(&my_led, 0);
+                //end
+
     /* Report movement immediately if non-zero */
     if (delta_x != 0 || delta_y != 0) {
 //        if (current_mode == AZ1UBALL_MODE_MOUSE) {
@@ -217,6 +224,15 @@ void az1uball_read_data_work(struct k_work *work)
             /* Report relative X movement */
             if (delta_x != 0) {
                 ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x, true, K_NO_WAIT);
+                //start
+                if(ret){
+                     uint32_t start_time=k_uptime_get();
+                     gpio_pin_set_dt(&my_green, 1);
+                     while(k_uptime_get()-start_time < 2000){};
+                     gpio_pin_set_dt(&my_green, 0);
+                     }
+                //end
+                }
             }
 
             /* Report relative Y movement */
@@ -231,6 +247,14 @@ void az1uball_read_data_work(struct k_work *work)
     /* Report switch state if it changed */
     if (data->sw_pressed != data->sw_pressed_prev) {
         ret = input_report_key(data->dev, INPUT_BTN_0, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
+                //start
+                if(ret){
+                     uint32_t start_time=k_uptime_get();
+                     gpio_pin_set_dt(&my_blue, 1);
+                     while(k_uptime_get()-start_time < 2000){};
+                     gpio_pin_set_dt(&my_blue, 0);
+                     }
+                //end
         data->sw_pressed_prev = data->sw_pressed;
     }
 }
