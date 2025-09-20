@@ -39,12 +39,20 @@ static int ec11_sample_fetch(const struct device *dev, enum sensor_channel chan)
     LOG_DBG("prev: %d, new: %d", drv_data->ab_state, val);
 
     switch (val | (drv_data->ab_state << 2)) {
+//  A      (usb_wrk.b_old_pin[SW_R1] ^ usb_wrk.b_now_pin[SW_R2]) == HIGH
+//  B    &&(usb_wrk.b_old_pin[SW_R2] ^ usb_wrk.b_now_pin[SW_R1]) == LOW    )
+//    &&( LOW  = (usb_wrk.b_ol2_pin[SW_R1] ^ usb_wrk.b_old_pin[SW_R2])
+//     || HIGH = (usb_wrk.b_ol2_pin[SW_R2] ^ usb_wrk.b_old_pin[SW_R1]))
     case 0b0010:
     case 0b0100:
     case 0b1101:
     case 0b1011:
         delta = -1;
         break;
+//        (usb_wrk.b_old_pin[SW_R1] ^ usb_wrk.b_now_pin[SW_R2]) == LOW 
+//      &&(usb_wrk.b_old_pin[SW_R2] ^ usb_wrk.b_now_pin[SW_R1]) == HIGH  )
+//    && ( HIGH = (usb_wrk.b_ol2_pin[SW_R1] ^ usb_wrk.b_old_pin[SW_R2])
+//     || (usb_wrk.b_old_pin[SW_R2] ^ usb_wrk.b_now_pin[SW_R1]) != (usb_wrk.b_ol2_pin[SW_R2] ^ usb_wrk.b_old_pin[SW_R1])))
     case 0b0001:
     case 0b0111:
     case 0b1110:

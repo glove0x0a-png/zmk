@@ -1,6 +1,10 @@
 #define DT_DRV_COMPAT zmk_az1uball
 
 #include <zephyr/device.h>
+//debug
+#include <zephyr/drivers/gpio.h>
+#include <zmk/event_manager.h>
+//debug
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
@@ -19,10 +23,17 @@ volatile float AZ1UBALL_SCROLL_SMOOTHING_FACTOR = 0.5f;
 #define LOW_POWER_POLL_INTERVAL K_MSEC(100) // 省電力時: 100ms (10Hz)
 #define LOW_POWER_TIMEOUT_MS 5000    // 5秒間入力がないと省電力モードへ
 
-//2025.09.20-LOG
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(az1uball, CONFIG_LOG_DEFAULT_LEVEL);
-//2025.09.20-LOG
+
+#define LED_R_NODE DT_ALIAS(led_red)
+#define LED_G_NODE DT_ALIAS(led_green)
+#define LED_B DT_ALIAS(led_blue)
+static const struct gpio_dt_spec my_led = GPIO_DT_SPEC_GET(LED_R_NODE, gpios);
+static const struct gpio_dt_spec my_green = GPIO_DT_SPEC_GET(LED_G_NODE, gpios);
+static const struct gpio_dt_spec my_blue = GPIO_DT_SPEC_GET(LED_B, gpios);
+
+
+//gpio_pin_set_dt(&led_red, 1);
+
 
 //global
 static int previous_x = 0;
@@ -42,34 +53,44 @@ static void az1uball_polling(struct k_timer *timer);
 /* Initialization of AZ1UBALL */
 static int az1uball_init(const struct device *dev)
 {
-
-    LOG_INF("az1uball_init-start-46");
-
+    //起動確認・init起動で赤5回、2秒おきに点滅
+    uint32_t start_time=k_uptime_get();
+    for(i=0;i<5;i++){
+      gpio_pin_set_dt(&my_led, 1);
+      while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+      start_time=k_uptime_get();
+      gpio_pin_set_dt(&my_led, 0);
+      while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+      start_time=k_uptime_get();
+    }
+    //ここまで
     struct az1uball_data *data = dev->data;
     const struct az1uball_config *config = dev->config;
     int ret;
-
-    //テスト用、ひたすら右に動かす
-    ret=input_report_rel(dev, INPUT_REL_X, 100 , true, K_NO_WAIT);
-    LOG_INF("az1uball_init-start-54,%d",ret);
-
-    //LOG_INF("AZ1UBALL driver initializing");
     data->dev = dev;
     data->sw_pressed_prev = false;
 
     /* Check if the I2C device is ready */
     if (!device_is_ready(config->i2c.bus)) {
-        //LOG_ERR("I2C bus device is not ready: 0x%x", config->i2c.addr);
+        //i2c準備不足・init起動で緑5回、2秒おきに点滅
+        uint32_t start_time=k_uptime_get();
+        for(i=0;i<5;i++){
+          gpio_pin_set_dt(&my_green, 1);
+          while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+          start_time=k_uptime_get();
+          gpio_pin_set_dt(&my_green, 0);
+          while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+          start_time=k_uptime_get();
+        }
+        //ここまで
         return -ENODEV;
     }
 
     /* Set turbo mode */
     uint8_t cmd = 0x91;
     ret = i2c_write_dt(&config->i2c, &cmd, sizeof(cmd));
-    LOG_INF("az1uball_init-start-69,%d",ret);
 
     if (ret) {
-        //LOG_ERR("Failed to set turbo mode");
         return ret;
     }
 
@@ -105,7 +126,6 @@ static void check_power_mode(struct az1uball_data *data) {
         data->is_low_power_mode = true;
         k_timer_stop(&data->polling_timer);
         k_timer_start(&data->polling_timer, LOW_POWER_POLL_INTERVAL, LOW_POWER_POLL_INTERVAL);
-        //LOG_DBG("Entering low power mode");
     }
 }
 
@@ -113,7 +133,21 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
     const struct az1uball_config *config = data->dev->config;
     float sensitivity = parse_sensitivity(config->sensitivity);
     float scaling_factor = sensitivity;  // 基本のスケーリングファクターを感度に設定
-    
+
+
+        //プロセスムーブ・青
+        uint32_t start_time=k_uptime_get();
+        for(i=0;i<5;i++){
+          gpio_pin_set_dt(&my_blue, 1);
+          while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+          start_time=k_uptime_get();
+          gpio_pin_set_dt(&my_blue, 0);
+          while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
+          start_time=k_uptime_get();
+        }
+        //ここまで
+
+
     if (time_between_interrupts < max_time) {
         // 既存の計算にsensitivityを掛ける
         float exponent = -3.0f * (float)time_between_interrupts / max_time;
@@ -147,7 +181,6 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
             data->is_low_power_mode = false;
             k_timer_stop(&data->polling_timer);
             k_timer_start(&data->polling_timer, NORMAL_POLL_INTERVAL, NORMAL_POLL_INTERVAL);
-            //LOG_DBG("Returning to normal mode");
         }
     }
 }
@@ -162,10 +195,8 @@ void az1uball_read_data_work(struct k_work *work)
 
     // Read data from I2C
     ret = i2c_read_dt(&config->i2c, buf, sizeof(buf));
-    LOG_INF("az1uball_init-start-165,%d",ret);
 
     if (ret) {
-        //LOG_ERR("Failed to read movement data from AZ1YBALL: %d", ret);
         return;
     }
 
@@ -187,13 +218,11 @@ void az1uball_read_data_work(struct k_work *work)
             /* Report relative X movement */
             if (delta_x != 0) {
                 ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x, true, K_NO_WAIT);
-                LOG_INF("az1uball_init-start-190,%d",ret);
             }
 
             /* Report relative Y movement */
             if (delta_y != 0) {
                 ret = input_report_rel(data->dev, INPUT_REL_Y, data->smoothed_y, true, K_NO_WAIT);
-                LOG_INF("az1uball_init-start-196,%d",ret);
             }
     }
 
@@ -203,7 +232,6 @@ void az1uball_read_data_work(struct k_work *work)
     /* Report switch state if it changed */
     if (data->sw_pressed != data->sw_pressed_prev) {
         ret = input_report_key(data->dev, INPUT_BTN_0, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
-        LOG_INF("az1uball_init-start-206,%d",ret);
         data->sw_pressed_prev = data->sw_pressed;
     }
 }
