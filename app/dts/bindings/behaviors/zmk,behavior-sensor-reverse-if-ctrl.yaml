@@ -1,9 +1,0 @@
-# Copyright (c) 2025 tさん
-# SPDX-License-Identifier: MIT
-
-compatible: "zmk_behavior_sensor_reverse_if_ctrl"
-
-description: >
-  Sensor behavior that scrolls based on sensor input and reverses direction when Ctrl is held.
-
-properties: {}
