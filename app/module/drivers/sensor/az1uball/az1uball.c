@@ -54,7 +54,7 @@ static int az1uball_init(const struct device *dev)
 {
     //起動確認・init起動で赤5回、2秒おきに点滅
     uint32_t start_time=k_uptime_get();
-    for(i=0;i<5;i++){
+    for(int i=0;i<5;i++){
       gpio_pin_set_dt(&my_led, 1);
       while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
       start_time=k_uptime_get();
@@ -73,7 +73,7 @@ static int az1uball_init(const struct device *dev)
     if (!device_is_ready(config->i2c.bus)) {
         //i2c準備不足・init起動で緑5回、2秒おきに点滅
         start_time=k_uptime_get();
-        for(i=0;i<5;i++){
+        for(int i=0;i<5;i++){
           gpio_pin_set_dt(&my_green, 1);
           while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
           start_time=k_uptime_get();
@@ -136,7 +136,7 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
 
         //プロセスムーブ・青
         uint32_t start_time=k_uptime_get();
-        for(i=0;i<5;i++){
+        for(int i=0;i<5;i++){
           gpio_pin_set_dt(&my_blue, 1);
           while(k_uptime_get()-start_time < 2000){}; //5秒間空ループ
           start_time=k_uptime_get();
