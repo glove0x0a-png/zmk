@@ -19,7 +19,6 @@ volatile float AZ1UBALL_SCROLL_SMOOTHING_FACTOR = 0.5f;
 #define LOW_POWER_POLL_INTERVAL K_MSEC(100) // 省電力時: 100ms (10Hz)
 #define LOW_POWER_TIMEOUT_MS 5000    // 5秒間入力がないと省電力モードへ
 
-
 //global
 static int previous_x = 0;
 static int previous_y = 0;
@@ -43,10 +42,9 @@ static int az1uball_init(const struct device *dev)
     int ret;
 
     //テスト用、ひたすら右に動かす
-    input_report_rel(data->dev, INPUT_REL_X, 10 , true, K_NO_WAIT);
+    input_report_rel(dev, INPUT_REL_X, 100 , true, K_NO_WAIT);
 
     //LOG_INF("AZ1UBALL driver initializing");
-
     data->dev = dev;
     data->sw_pressed_prev = false;
 
@@ -63,12 +61,6 @@ static int az1uball_init(const struct device *dev)
         //LOG_ERR("Failed to set turbo mode");
         return ret;
     }
-
-    //// 2025.09.20 ✅ 追加：inputデバイスとして登録
-    ///input_device_register(dev);
-    //// 2025.09.20 ✅ 追加：デバイスを有効化
-    //input_device_set_enabled(dev, true);
-
 
     k_work_init(&data->work, az1uball_read_data_work);
 
