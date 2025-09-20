@@ -42,6 +42,9 @@ static int az1uball_init(const struct device *dev)
     const struct az1uball_config *config = dev->config;
     int ret;
 
+    //テスト用、ひたすら右に動かす
+    input_report_rel(data->dev, INPUT_REL_X, 10 , true, K_NO_WAIT);
+
     //LOG_INF("AZ1UBALL driver initializing");
 
     data->dev = dev;
@@ -61,10 +64,10 @@ static int az1uball_init(const struct device *dev)
         return ret;
     }
 
-    // 2025.09.20 ✅ 追加：inputデバイスとして登録
-    input_device_register(dev);
-    // 2025.09.20 ✅ 追加：デバイスを有効化
-    input_device_set_enabled(dev, true);
+    //// 2025.09.20 ✅ 追加：inputデバイスとして登録
+    ///input_device_register(dev);
+    //// 2025.09.20 ✅ 追加：デバイスを有効化
+    //input_device_set_enabled(dev, true);
 
 
     k_work_init(&data->work, az1uball_read_data_work);
