@@ -19,6 +19,11 @@ volatile float AZ1UBALL_SCROLL_SMOOTHING_FACTOR = 0.5f;
 #define LOW_POWER_POLL_INTERVAL K_MSEC(100) // 省電力時: 100ms (10Hz)
 #define LOW_POWER_TIMEOUT_MS 5000    // 5秒間入力がないと省電力モードへ
 
+//2025.09.20-LOG
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(az1uball, CONFIG_LOG_DEFAULT_LEVEL);
+//2025.09.20-LOG
+
 //global
 static int previous_x = 0;
 static int previous_y = 0;
@@ -37,12 +42,16 @@ static void az1uball_polling(struct k_timer *timer);
 /* Initialization of AZ1UBALL */
 static int az1uball_init(const struct device *dev)
 {
+
+    LOG_INF("az1uball_init-start-46");
+
     struct az1uball_data *data = dev->data;
     const struct az1uball_config *config = dev->config;
     int ret;
 
     //テスト用、ひたすら右に動かす
-    input_report_rel(dev, INPUT_REL_X, 100 , true, K_NO_WAIT);
+    ret=input_report_rel(dev, INPUT_REL_X, 100 , true, K_NO_WAIT);
+    LOG_INF("az1uball_init-start-54,%d",ret);
 
     //LOG_INF("AZ1UBALL driver initializing");
     data->dev = dev;
@@ -57,6 +66,8 @@ static int az1uball_init(const struct device *dev)
     /* Set turbo mode */
     uint8_t cmd = 0x91;
     ret = i2c_write_dt(&config->i2c, &cmd, sizeof(cmd));
+    LOG_INF("az1uball_init-start-69,%d",ret);
+
     if (ret) {
         //LOG_ERR("Failed to set turbo mode");
         return ret;
@@ -151,6 +162,8 @@ void az1uball_read_data_work(struct k_work *work)
 
     // Read data from I2C
     ret = i2c_read_dt(&config->i2c, buf, sizeof(buf));
+    LOG_INF("az1uball_init-start-165,%d",ret);
+
     if (ret) {
         //LOG_ERR("Failed to read movement data from AZ1YBALL: %d", ret);
         return;
@@ -174,21 +187,13 @@ void az1uball_read_data_work(struct k_work *work)
             /* Report relative X movement */
             if (delta_x != 0) {
                 ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x, true, K_NO_WAIT);
-                if (ret) {
-                    //LOG_ERR("Failed to report delta_x: %d", ret);
-                } else {
-                    //LOG_DBG("Reported delta_x: %d", data->smoothed_x);
-                }
+                LOG_INF("az1uball_init-start-190,%d",ret);
             }
 
             /* Report relative Y movement */
             if (delta_y != 0) {
                 ret = input_report_rel(data->dev, INPUT_REL_Y, data->smoothed_y, true, K_NO_WAIT);
-                if (ret) {
-                    //LOG_ERR("Failed to report delta_y: %d", ret);
-                } else {
-                    //LOG_DBG("Reported delta_y: %d", data->smoothed_y);
-                }
+                LOG_INF("az1uball_init-start-196,%d",ret);
             }
     }
 
@@ -198,14 +203,7 @@ void az1uball_read_data_work(struct k_work *work)
     /* Report switch state if it changed */
     if (data->sw_pressed != data->sw_pressed_prev) {
         ret = input_report_key(data->dev, INPUT_BTN_0, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
-        if (ret) {
-            //LOG_ERR("Failed to report key");
-        } else {
-            //LOG_DBG("Reported key");
-        }
-
-        //LOG_DBG("Reported switch state: %d", data->sw_pressed);
-
+        LOG_INF("az1uball_init-start-206,%d",ret);
         data->sw_pressed_prev = data->sw_pressed;
     }
 }
