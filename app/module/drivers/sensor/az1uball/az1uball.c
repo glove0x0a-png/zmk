@@ -1,5 +1,6 @@
 #define DT_DRV_COMPAT zmk_az1uball
 
+
 #include <zephyr/device.h>
 //debug
 #include <zephyr/drivers/gpio.h>
@@ -10,6 +11,9 @@
 #include <math.h>
 #include <stdlib.h>
 #include "az1uball.h"
+#include <zmk/hid.h>         // HIDレポート送信（キーボード、マウスなど）
+#include <zmk/keycode.h>     // HID_USAGE_KEY_J などのキーコード定義
+
 
 volatile uint8_t AZ1UBALL_MOUSE_MAX_SPEED = 25;
 volatile uint8_t AZ1UBALL_MOUSE_MAX_TIME = 5;
@@ -207,8 +211,13 @@ void az1uball_read_data_work(struct k_work *work)
 
     /* Report switch state if it changed */
     if (data->sw_pressed != data->sw_pressed_prev) {
-        ret = input_report_key(data->dev, INPUT_BTN_2, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
+        //ret = input_report_key(data->dev, INPUT_BTN_2, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         //●●エラーではない from 335
+        if (data->sw_pressed) {
+            zmk_hid_keyboard_press(HID_USAGE_KEY_J);
+        } else {
+            zmk_hid_keyboard_release(HID_USAGE_KEY_J);
+        }
         data->sw_pressed_prev = data->sw_pressed;
     }
 }
