@@ -50,10 +50,6 @@ static int az1uball_init(const struct device *dev)
     const struct az1uball_config *config = dev->config;
     int ret;
     data->dev = dev;
-    /////
-    // az1uball_init() の中で取得
-    data->behavior_dev = device_get_binding("BEHAVIOR_KEY_PRESS");
-    /////
     data->sw_pressed_prev = false;
 
 
@@ -202,7 +198,7 @@ void az1uball_read_data_work(struct k_work *work)
 
     //struct
     struct zmk_behavior_binding binding = {
-        .behavior_dev = data->behavior_dev,
+        .behavior_dev = "BEHAVIOR_KEY_PRESS", 
         .param1 = 0x0D,  // HID_USAGE_KEY_J = 13
         .param2 = 0,
     };
@@ -210,7 +206,6 @@ void az1uball_read_data_work(struct k_work *work)
     struct zmk_behavior_binding_event event = {
         .position = 0, // 任意のキー位置（通常は0でOK）
         .timestamp = k_uptime_get(),
-        .source = ZMK_BEHAVIOR_BINDING_SOURCE_SENSOR,
     };
 
     /* Report switch state if it changed */

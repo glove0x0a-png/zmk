@@ -21,8 +21,6 @@ struct az1uball_config {
 };
 
 struct az1uball_data {
-    // az1uball_data に追加
-    const struct device *behavior_dev;
     const struct device *dev;
     struct k_work work;
     struct k_timer polling_timer;
