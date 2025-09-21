@@ -213,8 +213,9 @@ void az1uball_read_data_work(struct k_work *work)
         //ret = input_report_key(data->dev, INPUT_BTN_2, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         //●●エラーではない from 335
         if (data->sw_pressed) {
-            zmk_hid_keyboard_press(J);
-            zmk_hid_keyboard_release(J);
+            if(!zmk_hid_keyboard_is_pressed(J)) zmk_hid_keyboard_press(J);
+        }else{
+            if(zmk_hid_keyboard_is_pressed(J)) zmk_hid_keyboard_release(J);
         }
         data->sw_pressed_prev = data->sw_pressed;
     }
