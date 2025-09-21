@@ -24,11 +24,11 @@ static void ec11_get_ab_state(const struct device *dev) {
     const struct ec11_config *drv_cfg = dev->config;
     struct ec11_data *drv_data        = dev->data;
 
-    drv_data->ol2_a_pin=old_a_pin;
-    drv_data->ol2_b_pin=old_b_pin;
+    drv_data->ol2_a_pin=drv_data->old_a_pin;
+    drv_data->ol2_b_pin=drv_data->old_b_pin;
 
-    drv_data->old_a_pin=now_a_pin;
-    drv_data->old_b_pin=now_b_pin;
+    drv_data->old_a_pin=drv_data->now_a_pin;
+    drv_data->old_b_pin=drv_data->now_b_pin;
 
     drv_data->now_a_pin=(bool)gpio_pin_get_dt(&drv_cfg->a);
     drv_data->now_b_pin=(bool)gpio_pin_get_dt(&drv_cfg->b);
