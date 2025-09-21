@@ -138,8 +138,9 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
     int scaled_y_movement = (int)(delta_y * scaling_factor);
 
     // Apply smoothing
+    //XとY感度を変更(Yを抑えめに)
     data->smoothed_x = (int)(smoothing_factor * scaled_x_movement + (1.0f - smoothing_factor) * previous_x);
-    data->smoothed_y = (int)(smoothing_factor * scaled_y_movement + (1.0f - smoothing_factor) * previous_y);
+    data->smoothed_y = (int)(smoothing_factor * scaled_y_movement + (1.0f - smoothing_factor) * previous_y * 9 / 16);
 
     data->previous_x = data->smoothed_x;
     data->previous_y = data->smoothed_y;
@@ -206,7 +207,7 @@ void az1uball_read_data_work(struct k_work *work)
 
     /* Report switch state if it changed */
     if (data->sw_pressed != data->sw_pressed_prev) {
-        ret = input_report_key(data->dev, INPUT_KEY_J, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
+        ret = input_report_key(data->dev, INPUT_BTN_2, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         //●●エラーではない from 335
         data->sw_pressed_prev = data->sw_pressed;
     }
