@@ -32,7 +32,7 @@ static enum az1uball_mode current_mode = AZ1UBALL_MODE_MOUSE;//default:mouse
 
 const struct zmk_behavior_binding binding = {
     .behavior_dev = "BEHAVIOR_KEY_PRESS",
-    .param1 = HID_USAGE_KEY_J,
+    .param1 = 0x0D,  //HID_USAGE_KEY_J
     .param2 = 0,
 };
 
