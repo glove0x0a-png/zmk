@@ -45,7 +45,6 @@ static int ec11_sample_fetch(const struct device *dev, enum sensor_channel chan)
 
     //val = ec11_get_ab_state(dev);
     ec11_get_ab_state(dev);
-    const struct ec11_config *drv_cfg = dev->config;
 
     //LOG_DBG("prev: %d, new: %d", drv_data->ab_state, val);
 
