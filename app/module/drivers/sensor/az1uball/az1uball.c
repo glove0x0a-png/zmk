@@ -12,6 +12,7 @@
 #include <zmk/behavior.h>
 #include <zmk/endpoints.h>
 #include <zmk/keymap.h>
+#include <zmk/event_manager.h>
 
 //define
 #define NORMAL_POLL_INTERVAL K_MSEC(10)   // 通常時: 10ms (100Hz)
@@ -214,9 +215,9 @@ void az1uball_read_data_work(struct k_work *work)
         //ret = input_report_key(data->dev, INPUT_KEY_J, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         //ret = input_report_key(data->input_dev, 0x0D, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         if (data->sw_pressed) {
-            behavior_key_press(&binding, &event);
+            zmk_behavior_invoke_binding(&binding, &event,true);
         } else {
-            behavior_key_release(&binding, &event);
+            zmk_behavior_invoke_binding(&binding, &event,false);
         }
         data->sw_pressed_prev = data->sw_pressed;
     }
