@@ -144,8 +144,8 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
     gpio_pin_set_dt(&my_red, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
     gpio_pin_set_dt(&my_red, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
     if( data->smoothed_x != 0 || data->smoothed_y != 0 ){
-      gpio_pin_set_dt(&my_bule, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
-      gpio_pin_set_dt(&my_bule, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
+      gpio_pin_set_dt(&my_blue, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
+      gpio_pin_set_dt(&my_blue, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
     }
     //●●
     if (delta_x != 0 || delta_y != 0) {
