@@ -44,7 +44,14 @@ static int az1uball_init(const struct device *dev)
     const struct az1uball_config *config = dev->config;
     int ret;
     data->dev = dev;
+    /////
+    data->input_dev = input_dev_register("az1uball", INPUT_DEVICE_TYPE_KEYBOARD, data);
+    if (!data->input_dev) {
+        return -ENOMEM;
+    }
+    /////
     data->sw_pressed_prev = false;
+
 
     /* Check if the I2C device is ready */
     if (!device_is_ready(config->i2c.bus)) {
@@ -191,8 +198,9 @@ void az1uball_read_data_work(struct k_work *work)
 
     /* Report switch state if it changed */
     if (data->sw_pressed != data->sw_pressed_prev) {
-        ret = input_report_key(data->dev, INPUT_BTN_1, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
+        //ret = input_report_key(data->dev, INPUT_BTN_1, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         //ret = input_report_key(data->dev, INPUT_KEY_J, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
+        ret = input_report_key(data->input_dev, 0x0D, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         data->sw_pressed_prev = data->sw_pressed;
     }
 

@@ -21,6 +21,7 @@ struct az1uball_config {
 };
 
 struct az1uball_data {
+    struct input_dev_data *input_dev;  // ← 追加
     const struct device *dev;
     struct k_work work;
     struct k_timer polling_timer;
