@@ -31,7 +31,7 @@ static int previous_y = 0;
 static enum az1uball_mode current_mode = AZ1UBALL_MODE_MOUSE;//default:mouse
 
 const struct zmk_behavior_binding binding = {
-    .behavior_dev = "BEHAVIOR_KEY_PRESS",
+    .behavior_dev = "key_press",
     .param1 = 0x0D,  //HID_USAGE_KEY_J
     .param2 = 0,
 };
