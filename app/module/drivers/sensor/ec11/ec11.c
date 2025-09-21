@@ -5,7 +5,7 @@
  */
 
 #define DT_DRV_COMPAT alps_ec11
-
+	
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/util.h>
@@ -13,6 +13,8 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/sys/__assert.h>
 #include <zephyr/logging/log.h>
+#include <zmk/event_manager.h>
+#include <zmk/events/hid_indicators_changed.h>
 
 #include "ec11.h"
 
@@ -65,13 +67,13 @@ static int ec11_sample_fetch(const struct device *dev, enum sensor_channel chan)
         && drv_data->old_b_pin ^ drv_data->now_a_pin == 0 )
       &&(  drv_data->ol2_a_pin ^ drv_data->old_b_pin == 0 
          ||drv_data->ol2_b_pin ^ drv_data->old_a_pin == 1 )
-    )  delta = -1;
+    )  delta = 1;
     else if (
         (  drv_data->old_a_pin ^ drv_data->now_b_pin == 0
         && drv_data->old_b_pin ^ drv_data->now_a_pin == 1 )
       &&(  drv_data->ol2_a_pin ^ drv_data->old_b_pin == 1 
          ||drv_data->ol2_b_pin ^ drv_data->old_a_pin == 0 )
-    )  delta = 1;
+    )  delta = -1;
 //    switch (val | (drv_data->ab_state << 2)) {
 //    case 0b0010:
 //    case 0b0100:
