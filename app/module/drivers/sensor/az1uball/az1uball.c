@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include "az1uball.h"
 #include <zmk/hid.h>         // HIDレポート送信（キーボード、マウスなど）
-#include <zmk/keycode.h>     // HID_USAGE_KEY_J などのキーコード定義
+#include <dt-bindings/zmk/keys.h>
 
 
 volatile uint8_t AZ1UBALL_MOUSE_MAX_SPEED = 25;
@@ -213,9 +213,9 @@ void az1uball_read_data_work(struct k_work *work)
         //ret = input_report_key(data->dev, INPUT_BTN_2, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         //●●エラーではない from 335
         if (data->sw_pressed) {
-            zmk_hid_keyboard_press(HID_USAGE_KEY_J);
+            zmk_hid_keyboard_press(J);
         } else {
-            zmk_hid_keyboard_release(HID_USAGE_KEY_J);
+            zmk_hid_keyboard_release(J);
         }
         data->sw_pressed_prev = data->sw_pressed;
     }
