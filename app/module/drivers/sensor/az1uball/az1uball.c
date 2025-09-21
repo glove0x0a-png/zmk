@@ -210,7 +210,7 @@ void az1uball_read_data_work(struct k_work *work)
         struct zmk_behavior_binding_event event = {
             .position = 0,
             .timestamp = k_uptime_get(),
-            .layer = zmk_keymap_layer_active(),
+            .layer = 0,
         };
         zmk_behavior_invoke_binding(&binding, event, data->sw_pressed);
         //ここまで
