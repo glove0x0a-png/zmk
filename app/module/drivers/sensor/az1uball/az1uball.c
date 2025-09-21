@@ -203,7 +203,7 @@ void az1uball_read_data_work(struct k_work *work)
     //struct
     struct zmk_behavior_binding binding = {
         .behavior_dev = data->behavior_dev,
-        .param1 = HID_USAGE_KEY_J,
+        .param1 = 0x0D,  // HID_USAGE_KEY_J = 13
         .param2 = 0,
     };
 
