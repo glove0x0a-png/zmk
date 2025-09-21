@@ -13,8 +13,6 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/sys/__assert.h>
 #include <zephyr/logging/log.h>
-#include <zmk/event_manager.h>
-#include <zmk/events/hid_indicators_changed.h>
 
 #include "ec11.h"
 
