@@ -31,9 +31,8 @@ static const struct gpio_dt_spec my_led = GPIO_DT_SPEC_GET(LED_R_NODE, gpios);
 static const struct gpio_dt_spec my_green = GPIO_DT_SPEC_GET(LED_G_NODE, gpios);
 static const struct gpio_dt_spec my_blue = GPIO_DT_SPEC_GET(LED_B, gpios);
 uint32_t start_time;
-//gpio_pin_set_dt(&led_red, 1);
-
-
+//gpio_pin_set_dt(&my_green, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
+//gpio_pin_set_dt(&my_green, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
 //global
 static int previous_x = 0;
 static int previous_y = 0;
@@ -141,12 +140,16 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
     data->previous_x = data->smoothed_x;
     data->previous_y = data->smoothed_y;
 
+    //●●
+    gpio_pin_set_dt(&my_red, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
+    gpio_pin_set_dt(&my_red, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
+    if( data->smoothed_x != 0 || data->smoothed_y != 0 ){
+      gpio_pin_set_dt(&my_bule, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
+      gpio_pin_set_dt(&my_bule, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
+    }
+    //●●
     if (delta_x != 0 || delta_y != 0) {
-        //test
-        gpio_pin_set_dt(&my_blue, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
-        gpio_pin_set_dt(&my_blue, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
-        //
-
+        //●ボールタッチ時に起動OK from 336
         data->last_activity_time = k_uptime_get();
         
         if (data->is_low_power_mode) {
@@ -191,18 +194,9 @@ void az1uball_read_data_work(struct k_work *work)
             //●●起動確認-OK from 332
             /* Report relative X movement */
             if (delta_x != 0) {
-                //test
-                gpio_pin_set_dt(&my_led, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
-                gpio_pin_set_dt(&my_led, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
-                //
+                //●●通過確認-OK from 336
                 ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x, true, K_NO_WAIT);
                 //●●エラーではない from 335
-                //test
-                if(ret){
-                  gpio_pin_set_dt(&my_green, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
-                  gpio_pin_set_dt(&my_green, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
-                }
-                //
             }
 
             /* Report relative Y movement */
