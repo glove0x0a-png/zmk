@@ -204,21 +204,16 @@ void az1uball_read_data_work(struct k_work *work)
         .param2 = 0,
     };
 
-    struct zmk_behavior_binding_event event = {
-        .position = 0, // 任意のキー位置（通常は0でOK）
+    struct zmk_behavior_binding_data binding_data = {
+        .position = 0, // 任意のキー位置
         .timestamp = k_uptime_get(),
+        .layer = 0,    // 必要に応じて現在のレイヤーを指定
     };
 
     /* Report switch state if it changed */
     if (data->sw_pressed != data->sw_pressed_prev) {
         //ret = input_report_key(data->dev, INPUT_BTN_1, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
-        //ret = input_report_key(data->dev, INPUT_KEY_J, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
-        //ret = input_report_key(data->input_dev, 0x0D, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
-        if (data->sw_pressed) {
-            zmk_behavior_invoke_binding(&binding, &event,true);
-        } else {
-            zmk_behavior_invoke_binding(&binding, &event,false);
-        }
+        zmk_behavior_invoke_binding(&binding, &binding_data,data->sw_pressed);
         data->sw_pressed_prev = data->sw_pressed;
     }
 
