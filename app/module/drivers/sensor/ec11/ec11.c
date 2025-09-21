@@ -38,7 +38,7 @@ static void ec11_get_ab_state(const struct device *dev) {
 static int ec11_sample_fetch(const struct device *dev, enum sensor_channel chan) {
     struct ec11_data *drv_data = dev->data;
     const struct ec11_config *drv_cfg = dev->config;
-    uint8_t val;
+    //uint8_t val;
     int8_t delta;
 
     __ASSERT_NO_MSG(chan == SENSOR_CHAN_ALL || chan == SENSOR_CHAN_ROTATION);
@@ -61,16 +61,16 @@ static int ec11_sample_fetch(const struct device *dev, enum sensor_channel chan)
 
     delta = 0;
     if(
-        (  drv_data->old_a_pin ^ drv_data->now_b_pin == 1
-        && drv_data->old_b_pin ^ drv_data->now_a_pin == 0 )
-      &&(  drv_data->ol2_a_pin ^ drv_data->old_b_pin == 0 
-         ||drv_data->ol2_b_pin ^ drv_data->old_a_pin == 1 )
+        (  (drv_data->old_a_pin ^ drv_data->now_b_pin) == 1
+        && (drv_data->old_b_pin ^ drv_data->now_a_pin) == 0 )
+      &&(  (drv_data->ol2_a_pin ^ drv_data->old_b_pin) == 0 
+         ||(drv_data->ol2_b_pin ^ drv_data->old_a_pin) == 1 )
     )  delta = 1;
     else if (
-        (  drv_data->old_a_pin ^ drv_data->now_b_pin == 0
-        && drv_data->old_b_pin ^ drv_data->now_a_pin == 1 )
-      &&(  drv_data->ol2_a_pin ^ drv_data->old_b_pin == 1 
-         ||drv_data->ol2_b_pin ^ drv_data->old_a_pin == 0 )
+        (  (drv_data->old_a_pin ^ drv_data->now_b_pin) == 0
+        && (drv_data->old_b_pin ^ drv_data->now_a_pin) == 1 )
+      &&(  (drv_data->ol2_a_pin ^ drv_data->old_b_pin) == 1 
+         ||(drv_data->ol2_b_pin ^ drv_data->old_a_pin) == 0 )
     )  delta = -1;
 //    switch (val | (drv_data->ab_state << 2)) {
 //    case 0b0010:
@@ -143,7 +143,7 @@ static const struct sensor_driver_api ec11_driver_api = {
 };
 
 int ec11_init(const struct device *dev) {
-    struct ec11_data *drv_data = dev->data;
+    //struct ec11_data *drv_data = dev->data;
     const struct ec11_config *drv_cfg = dev->config;
 
     LOG_DBG("A: %s %d B: %s %d resolution %d", drv_cfg->a.port->name, drv_cfg->a.pin,

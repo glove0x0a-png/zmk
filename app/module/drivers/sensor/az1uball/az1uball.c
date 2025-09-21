@@ -194,6 +194,7 @@ void az1uball_read_data_work(struct k_work *work)
         //ret = input_report_key(data->dev, INPUT_BTN_2, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         ret = input_report_key(data->dev, INPUT_KEY_J, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         data->sw_pressed_prev = data->sw_pressed;
+    }
 
 }
 
