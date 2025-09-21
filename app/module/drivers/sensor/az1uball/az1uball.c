@@ -27,7 +27,7 @@ volatile float AZ1UBALL_SCROLL_SMOOTHING_FACTOR = 0.5f;
 #define LED_R_NODE DT_ALIAS(led_red)
 #define LED_G_NODE DT_ALIAS(led_green)
 #define LED_B DT_ALIAS(led_blue)
-static const struct gpio_dt_spec my_led = GPIO_DT_SPEC_GET(LED_R_NODE, gpios);
+static const struct gpio_dt_spec my_red = GPIO_DT_SPEC_GET(LED_R_NODE, gpios);
 static const struct gpio_dt_spec my_green = GPIO_DT_SPEC_GET(LED_G_NODE, gpios);
 static const struct gpio_dt_spec my_blue = GPIO_DT_SPEC_GET(LED_B, gpios);
 uint32_t start_time;
