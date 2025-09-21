@@ -9,10 +9,9 @@
 #include "az1uball.h"
 
 //追加
-#include <zmk/behavior.h>
-#include <zmk/endpoints.h>
-#include <zmk/keymap.h>
 #include <zmk/event_manager.h>
+#include <zmk/behavior.h>
+#include <zmk/keymap.h>
 
 //define
 #define NORMAL_POLL_INTERVAL K_MSEC(10)   // 通常時: 10ms (100Hz)
@@ -30,6 +29,13 @@ volatile float AZ1UBALL_SCROLL_SMOOTHING_FACTOR = 0.5f;
 static int previous_x = 0;
 static int previous_y = 0;
 static enum az1uball_mode current_mode = AZ1UBALL_MODE_MOUSE;//default:mouse
+
+const struct zmk_behavior_binding binding = {
+    .behavior_dev = "BEHAVIOR_KEY_PRESS",
+    .param1 = HID_USAGE_KEY_J,
+    .param2 = 0,
+};
+
 
 //prototype
 static int az1uball_init(const struct device *dev);					//初期化処理
@@ -197,24 +203,19 @@ void az1uball_read_data_work(struct k_work *work)
     /* Update switch state */
     data->sw_pressed = (buf[4] & MSK_SWITCH_STATE) != 0;
 
-    //struct
-    struct zmk_behavior_binding binding = {
-        .behavior_dev = "BEHAVIOR_KEY_PRESS", 
-        .param1 = 0x0D,  // HID_USAGE_KEY_J = 13
-        .param2 = 0,
-    };
-
-    struct zmk_behavior_binding_data binding_data = {
-        .position = 0, // 任意のキー位置
-        .timestamp = k_uptime_get(),
-        .layer = 0,    // 必要に応じて現在のレイヤーを指定
-    };
-
     /* Report switch state if it changed */
     if (data->sw_pressed != data->sw_pressed_prev) {
         //ret = input_report_key(data->dev, INPUT_BTN_1, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
-        zmk_behavior_invoke_binding(&binding, &binding_data,data->sw_pressed);
+        //ここから
+        struct zmk_behavior_binding_event event = {
+            .position = 0,
+            .timestamp = k_uptime_get(),
+            .layer = zmk_keymap_layer_active(),
+        };
+        zmk_behavior_invoke_binding(&binding, event, data->sw_pressed);
+        //ここまで
         data->sw_pressed_prev = data->sw_pressed;
+        }
     }
 
 }
