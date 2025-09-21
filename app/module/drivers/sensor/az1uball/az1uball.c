@@ -215,9 +215,7 @@ void az1uball_read_data_work(struct k_work *work)
         zmk_behavior_invoke_binding(&binding, event, data->sw_pressed);
         //ここまで
         data->sw_pressed_prev = data->sw_pressed;
-        }
     }
-
 }
 
 static void az1uball_polling(struct k_timer *timer)
