@@ -1,6 +1,5 @@
 #define DT_DRV_COMPAT zmk_az1uball
 
-
 #include <zephyr/device.h>
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/i2c.h>
@@ -9,7 +8,17 @@
 #include <stdlib.h>
 #include "az1uball.h"
 
+//追加
+#include <zmk/behavior.h>
+#include <zmk/endpoints.h>
+#include <zmk/keymap.h>
 
+//define
+#define NORMAL_POLL_INTERVAL K_MSEC(10)   // 通常時: 10ms (100Hz)
+#define LOW_POWER_POLL_INTERVAL K_MSEC(100) // 省電力時: 100ms (10Hz)
+#define LOW_POWER_TIMEOUT_MS 5000    // 5秒間入力がないと省電力モードへ
+
+//global
 volatile uint8_t AZ1UBALL_MOUSE_MAX_SPEED = 25;
 volatile uint8_t AZ1UBALL_MOUSE_MAX_TIME = 5;
 volatile float AZ1UBALL_MOUSE_SMOOTHING_FACTOR = 1.3f;
@@ -17,15 +26,11 @@ volatile uint8_t AZ1UBALL_SCROLL_MAX_SPEED = 1;
 volatile uint8_t AZ1UBALL_SCROLL_MAX_TIME = 1;
 volatile float AZ1UBALL_SCROLL_SMOOTHING_FACTOR = 0.5f;
 
-#define NORMAL_POLL_INTERVAL K_MSEC(10)   // 通常時: 10ms (100Hz)
-#define LOW_POWER_POLL_INTERVAL K_MSEC(100) // 省電力時: 100ms (10Hz)
-#define LOW_POWER_TIMEOUT_MS 5000    // 5秒間入力がないと省電力モードへ
-
-//global
 static int previous_x = 0;
 static int previous_y = 0;
 static enum az1uball_mode current_mode = AZ1UBALL_MODE_MOUSE;//default:mouse
 
+//prototype
 static int az1uball_init(const struct device *dev);					//初期化処理
 static float parse_sensitivity(const char *sensitivity);			//プロパティからマウス精度を変更
 static void check_power_mode(         struct az1uball_data *data);	//LOW_POWER_TIMEOUT_MSを参照し、省電力モードへ
@@ -34,6 +39,7 @@ static void az1uball_process_movement(struct az1uball_data *data,	//マウス動
 	int max_speed, int max_time, float smoothing_factor);
 void az1uball_read_data_work(struct k_work *work);					//i2c_read_dtあり。I2C通信でデータ取り出し。
 static void az1uball_polling(struct k_timer *timer);
+
 
 ///////////////////////////////////////////////////////////////////////////
 /* Initialization of AZ1UBALL */
@@ -45,10 +51,8 @@ static int az1uball_init(const struct device *dev)
     int ret;
     data->dev = dev;
     /////
-    data->input_dev = input_dev_register("az1uball", INPUT_DEVICE_TYPE_KEYBOARD, data);
-    if (!data->input_dev) {
-        return -ENOMEM;
-    }
+    // az1uball_init() の中で取得
+    data->behavior_dev = device_get_binding("BEHAVIOR_KEY_PRESS");
     /////
     data->sw_pressed_prev = false;
 
@@ -196,11 +200,29 @@ void az1uball_read_data_work(struct k_work *work)
     /* Update switch state */
     data->sw_pressed = (buf[4] & MSK_SWITCH_STATE) != 0;
 
+    //struct
+    struct zmk_behavior_binding binding = {
+        .behavior_dev = data->behavior_dev,
+        .param1 = HID_USAGE_KEY_J,
+        .param2 = 0,
+    };
+
+    struct zmk_behavior_binding_event event = {
+        .position = 0, // 任意のキー位置（通常は0でOK）
+        .timestamp = k_uptime_get(),
+        .source = ZMK_BEHAVIOR_BINDING_SOURCE_SENSOR,
+    };
+
     /* Report switch state if it changed */
     if (data->sw_pressed != data->sw_pressed_prev) {
         //ret = input_report_key(data->dev, INPUT_BTN_1, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         //ret = input_report_key(data->dev, INPUT_KEY_J, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
-        ret = input_report_key(data->input_dev, 0x0D, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
+        //ret = input_report_key(data->input_dev, 0x0D, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
+        if (data->sw_pressed) {
+            behavior_key_press(&binding, &event);
+        } else {
+            behavior_key_release(&binding, &event);
+        }
         data->sw_pressed_prev = data->sw_pressed;
     }
 
