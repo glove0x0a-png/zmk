@@ -2,11 +2,6 @@
 
 
 #include <zephyr/device.h>
-//debug
-#include <zephyr/drivers/gpio.h>
-//debug
-#include <zmk/hid.h>
-#include <dt-bindings/zmk/keys.h>
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
@@ -26,20 +21,6 @@ volatile float AZ1UBALL_SCROLL_SMOOTHING_FACTOR = 0.5f;
 #define LOW_POWER_POLL_INTERVAL K_MSEC(100) // 省電力時: 100ms (10Hz)
 #define LOW_POWER_TIMEOUT_MS 5000    // 5秒間入力がないと省電力モードへ
 
-///////
-//#define LED_R_NODE DT_ALIAS(led_red)
-//#define LED_G_NODE DT_ALIAS(led_green)
-//#define LED_B DT_ALIAS(led_blue)
-//static const struct gpio_dt_spec my_red = GPIO_DT_SPEC_GET(LED_R_NODE, gpios);
-//static const struct gpio_dt_spec my_green = GPIO_DT_SPEC_GET(LED_G_NODE, gpios);
-//static const struct gpio_dt_spec my_blue = GPIO_DT_SPEC_GET(LED_B, gpios);
-//uint32_t start_time;
-//gpio_pin_set_dt(&my_red, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
-//gpio_pin_set_dt(&my_red, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
-//gpio_pin_set_dt(&my_green, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
-//gpio_pin_set_dt(&my_green, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 2000){};
-//gpio_pin_set_dt(&my_blue, 1);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
-//gpio_pin_set_dt(&my_blue, 0);start_time=k_uptime_get();while(k_uptime_get()-start_time < 500){};
 //global
 static int previous_x = 0;
 static int previous_y = 0;
@@ -210,15 +191,9 @@ void az1uball_read_data_work(struct k_work *work)
 
     /* Report switch state if it changed */
     if (data->sw_pressed != data->sw_pressed_prev) {
-        //ret = input_report_key(data->dev, INPUT_BTN_2, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
-        //●●エラーではない from 335
-        if (data->sw_pressed) {
-            if(!zmk_hid_keyboard_is_pressed(J)) zmk_hid_keyboard_press(J);
-        }else{
-            if(zmk_hid_keyboard_is_pressed(J)) zmk_hid_keyboard_release(J);
-        }
+        ret = input_report_key(data->dev, INPUT_BTN_2, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);
         data->sw_pressed_prev = data->sw_pressed;
-    }
+
 }
 
 static void az1uball_polling(struct k_timer *timer)
