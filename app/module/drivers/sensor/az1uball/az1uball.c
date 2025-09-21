@@ -214,7 +214,6 @@ void az1uball_read_data_work(struct k_work *work)
         //●●エラーではない from 335
         if (data->sw_pressed) {
             zmk_hid_keyboard_press(J);
-        } else {
             zmk_hid_keyboard_release(J);
         }
         data->sw_pressed_prev = data->sw_pressed;
