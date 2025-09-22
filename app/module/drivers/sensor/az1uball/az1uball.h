@@ -35,11 +35,8 @@ struct az1uball_data {
     int previous_y;
     int smoothed_x;
     int smoothed_y;
-    enum az1uball_mode current_mode;
     uint32_t last_activity_time;    // 最後の入力があった時間
-    bool is_low_power_mode;         // 省電力モードフラグ
     uint32_t last_jiggle_time;
+    bool is_connected;
+    bool is_active;
 };
-
-/* Public API */
-void az1uball_toggle_mode(void);
