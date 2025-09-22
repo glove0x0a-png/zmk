@@ -80,11 +80,11 @@ static int az1uball_init(const struct device *dev)
 
 void az1uball_read_data_work(struct k_work *work)
 {
+    struct az1uball_data *data = CONTAINER_OF(work, struct az1uball_data, work);
     if (!data->is_connected) {
         return; // 状態①：非接続 → センサ読み取りもスキップ
     }
 
-    struct az1uball_data *data = CONTAINER_OF(work, struct az1uball_data, work);
     const struct az1uball_config *config = data->dev->config;
     uint8_t buf[5];
     int ret;
