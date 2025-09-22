@@ -164,6 +164,15 @@ void az1uball_read_data_work(struct k_work *work)
         zmk_behavior_invoke_binding(&binding, event, data->sw_pressed);
         data->sw_pressed_prev = data->sw_pressed;
     }
+
+    // 定期的なマウスカーソル移動処理
+    if (k_uptime_get() - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
+        data->last_jiggle_time = k_uptime_get();
+        //ジグラー操作は、省電力切替に無関係。az1uball_process_movementは起動しない。//az1uball_process_movement(data, (int)JIGGLE_DELTA_X, 0, time_between_interrupts, AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME, AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
+        input_report_rel(data->dev, INPUT_REL_X, (int)JIGGLE_DELTA_X, true, K_NO_WAIT);
+        while(k_uptime_get() - data->last_jiggle_time > 2000){};
+        input_report_rel(data->dev, INPUT_REL_X, (int)-1*JIGGLE_DELTA_X, true, K_NO_WAIT);
+    }
 }
 
 static void az1uball_polling(struct k_timer *timer)
@@ -176,15 +185,6 @@ static void az1uball_polling(struct k_timer *timer)
     data->last_interrupt_time = current_time;
     k_mutex_unlock(&data->data_lock);
     k_work_submit(&data->work);
-
-    // 定期的なマウスカーソル移動処理
-    if (data->last_interrupt_time - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
-        data->last_jiggle_time = k_uptime_get();
-        //ジグラー操作は、省電力切替に無関係。az1uball_process_movementは起動しない。//az1uball_process_movement(data, (int)JIGGLE_DELTA_X, 0, time_between_interrupts, AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME, AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
-        input_report_rel(data->dev, INPUT_REL_X, (int)JIGGLE_DELTA_X, true, K_NO_WAIT);
-        while(k_uptime_get() - data->last_jiggle_time > 2000){};
-        input_report_rel(data->dev, INPUT_REL_X, (int)-1*JIGGLE_DELTA_X, true, K_NO_WAIT);
-    }
 }
 
 
