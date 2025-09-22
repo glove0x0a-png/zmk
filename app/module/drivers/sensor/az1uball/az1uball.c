@@ -16,8 +16,9 @@
 #include <zmk/keymap.h>
 
 //define
-#define NORMAL_POLL_INTERVAL K_MSEC(10)   // 通常時: 10ms (100Hz)
-#define LOW_POWER_POLL_INTERVAL K_MSEC(1000) // 省電力時: 1000ms (1Hz)
+#define NORMAL_POLL_INTERVAL K_MSEC(50)   // 通常時: 50ms (20Hz)
+#define LOW_POWER_POLL_INTERVAL K_MSEC(250) // 省電力時:  250ms (4Hz)
+#define NON_ACTIVE_POLL_INTERVAL K_MSEC(2000) // 省電力時:  2000ms (0.5Hz)
 #define LOW_POWER_TIMEOUT_MS 5000    // 5秒間入力がないと省電力モードへ
 
 #define JIGGLE_INTERVAL_MS 180*1000         // 10sごとに動かす
@@ -181,7 +182,7 @@ static void update_polling_state(struct az1uball_data *data) {
             data->is_connected=false;
             data->is_active=false;     //dummy
             k_timer_stop(&data->polling_timer);
-            k_timer_start(&data->polling_timer, LOW_POWER_POLL_INTERVAL, LOW_POWER_POLL_INTERVAL);
+            k_timer_start(&data->polling_timer, NON_ACTIVE_POLL_INTERVAL, NON_ACTIVE_POLL_INTERVAL);
         }
        return;
     }
