@@ -1,0 +1,9 @@
+compatible: "zmk,behavior-toggle-action"
+include: base.yaml
+
+properties:
+  bindings:
+    type: phandle-array
+    required: true
+  label:
+    type: string
