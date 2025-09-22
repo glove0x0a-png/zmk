@@ -55,40 +55,6 @@ bool is_active_profile_connected(void);
 static void update_polling_state(struct az1uball_data *data);
 
 ///////////////////////////////////////////////////////////////////////////
-static void update_polling_state(struct az1uball_data *data) {
-    bool connected = zmk_ble_active_profile_is_connected() || zmk_usb_is_powered();
-    uint32_t idle_time = k_uptime_get() - data->last_activity_time;
-
-    //未接続
-    if (!connected) {
-       if (data->is_connected){
-         data->is_connected=false;
-         data->is_active=false;     //dummy
-         k_timer_stop(&data->polling_timer);
-         k_timer_start(&data->polling_timer, LOW_POWER_POLL_INTERVAL, LOW_POWER_POLL_INTERVAL);
-       }
-       return;
-    }
-    //接続
-    data->is_connected=true;
-    if (idle_time > LOW_POWER_TIMEOUT_MS) {
-        // 状態②：接続あり・未操作 → 省電力モード（検知あり）
-        if (data->is_active
-            && (k_uptime_get() - data->last_activity_time) > LOW_POWER_TIMEOUT_MS) {
-            data->is_active = false;
-            k_timer_stop(&data->polling_timer);
-            k_timer_start(&data->polling_timer, LOW_POWER_POLL_INTERVAL, LOW_POWER_POLL_INTERVAL);
-        }
-    } else {
-        // 状態③：接続あり・操作中 → 通常モード
-        if (!data->is_active) {
-            data->is_active = true;
-            k_timer_stop(&data->polling_timer);
-            k_timer_start(&data->polling_timer, NORMAL_POLL_INTERVAL, NORMAL_POLL_INTERVAL);
-        }
-    }
-}
-
 /* Initialization of AZ1UBALL */
 static int az1uball_init(const struct device *dev)
 {
@@ -112,35 +78,12 @@ static int az1uball_init(const struct device *dev)
     return 0;
 }
 
-static void az1uball_process_movement(struct az1uball_data *data, int delta_x, int delta_y, uint32_t time_between_interrupts, int max_speed, int max_time, float smoothing_factor) {
-    const struct az1uball_config *config = data->dev->config;
-    float sensitivity = parse_sensitivity(config->sensitivity);
-    float scaling_factor = sensitivity;
-    if (time_between_interrupts < max_time) {
-        float exponent = -3.0f * (float)time_between_interrupts / max_time;
-        scaling_factor *= 1.0f + (max_speed - 1.0f) * expf(exponent);
-    }
-
-    atomic_add(&data->x_buffer, delta_x);
-    atomic_add(&data->y_buffer, delta_y);
-
-    int scaled_x_movement = (int)(delta_x * scaling_factor);
-    int scaled_y_movement = (int)(delta_y * scaling_factor);
-
-    data->smoothed_x = (int)(smoothing_factor * scaled_x_movement + (1.0f - smoothing_factor) * previous_x);
-    data->smoothed_y = (int)(smoothing_factor * scaled_y_movement + (1.0f - smoothing_factor) * previous_y * 9 / 16);
-
-    data->previous_x = data->smoothed_x;
-    data->previous_y = data->smoothed_y;
-
-    if (delta_x != 0 || delta_y != 0) {
-        data->last_activity_time = k_uptime_get(); // 状態②→③への復帰トリガー
-        data->is_active=true;
-    }
-}
-
 void az1uball_read_data_work(struct k_work *work)
 {
+    if (!data->is_connected) {
+        return; // 状態①：非接続 → センサ読み取りもスキップ
+    }
+
     struct az1uball_data *data = CONTAINER_OF(work, struct az1uball_data, work);
     const struct az1uball_config *config = data->dev->config;
     uint8_t buf[5];
@@ -178,16 +121,41 @@ void az1uball_read_data_work(struct k_work *work)
         data->sw_pressed_prev = data->sw_pressed;
     }
 
-    // ジグラー操作（接続時のみ有効）
-    if (data->is_connected) {
-        if (k_uptime_get() - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
-            data->last_jiggle_time = k_uptime_get();
-            input_report_rel(data->dev, INPUT_REL_X, JIGGLE_DELTA_X, true, K_NO_WAIT);
-            k_sleep(K_MSEC(10));
-            input_report_rel(data->dev, INPUT_REL_X, -JIGGLE_DELTA_X, true, K_NO_WAIT);
-        }
+    // ジグラー操作
+    if (k_uptime_get() - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
+        data->last_jiggle_time = k_uptime_get();
+        input_report_rel(data->dev, INPUT_REL_X, JIGGLE_DELTA_X, true, K_NO_WAIT);
+        k_sleep(K_MSEC(10));
+        input_report_rel(data->dev, INPUT_REL_X, -JIGGLE_DELTA_X, true, K_NO_WAIT);
     }
 }
+
+static void az1uball_process_movement(struct az1uball_data *data, int delta_x, int delta_y, uint32_t time_between_interrupts, int max_speed, int max_time, float smoothing_factor) {
+    const struct az1uball_config *config = data->dev->config;
+    float sensitivity = parse_sensitivity(config->sensitivity);
+    float scaling_factor = sensitivity;
+    if (time_between_interrupts < max_time) {
+        float exponent = -3.0f * (float)time_between_interrupts / max_time;
+        scaling_factor *= 1.0f + (max_speed - 1.0f) * expf(exponent);
+    }
+
+    atomic_add(&data->x_buffer, delta_x);
+    atomic_add(&data->y_buffer, delta_y);
+
+    int scaled_x_movement = (int)(delta_x * scaling_factor);
+    int scaled_y_movement = (int)(delta_y * scaling_factor);
+
+    data->smoothed_x = (int)(smoothing_factor * scaled_x_movement + (1.0f - smoothing_factor) * previous_x);
+    data->smoothed_y = (int)(smoothing_factor * scaled_y_movement + (1.0f - smoothing_factor) * previous_y * 9 / 16);
+
+    data->previous_x = data->smoothed_x;
+    data->previous_y = data->smoothed_y;
+
+    if (delta_x != 0 || delta_y != 0) {
+        data->last_activity_time = k_uptime_get(); // 状態②→③への復帰トリガー
+    }
+}
+
 
 static void az1uball_polling(struct k_timer *timer)
 {
@@ -197,13 +165,55 @@ static void az1uball_polling(struct k_timer *timer)
     if (!data->is_connected) {
         return; // 状態①：非接続 → センサ読み取りもスキップ
     }
-
     uint32_t current_time = k_uptime_get();
     k_mutex_lock(&data->data_lock, K_NO_WAIT);
     data->previous_interrupt_time = data->last_interrupt_time;
     data->last_interrupt_time = current_time;
     k_mutex_unlock(&data->data_lock);
     k_work_submit(&data->work);
+}
+
+//polling周期を更新、input=last_activity_time、output=is_connected、is_active
+static void update_polling_state(struct az1uball_data *data) {
+    //未接続
+    if ( !zmk_ble_active_profile_is_connected() && !zmk_usb_is_powered() ) {
+        if (data->is_connected){
+            data->is_connected=false;
+            data->is_active=false;     //dummy
+            k_timer_stop(&data->polling_timer);
+            k_timer_start(&data->polling_timer, LOW_POWER_POLL_INTERVAL, LOW_POWER_POLL_INTERVAL);
+        }
+       return;
+    }
+    //接続
+    data->is_connected=true;
+    if (k_uptime_get() - data->last_activity_time > LOW_POWER_TIMEOUT_MS) {
+        // 状態②：接続あり・未操作 → 省電力モード（検知あり）
+        if (data->is_active){
+            data->is_active = false;
+            k_timer_stop(&data->polling_timer);
+            k_timer_start(&data->polling_timer, LOW_POWER_POLL_INTERVAL, LOW_POWER_POLL_INTERVAL);
+        }
+    } else {
+        // 状態③：接続あり・操作中 → 通常モード
+        if (!data->is_active) {
+            data->is_active = true;
+            k_timer_stop(&data->polling_timer);
+            k_timer_start(&data->polling_timer, NORMAL_POLL_INTERVAL, NORMAL_POLL_INTERVAL);
+        }
+    }
+}
+//configからsensitivityの取得
+static float parse_sensitivity(const char *sensitivity) {
+    float value;
+    char *endptr;
+    
+    value = strtof(sensitivity, &endptr);
+    if (endptr == sensitivity || (*endptr != 'x' && *endptr != 'X')) {
+        return 1.0f; // デフォルト値
+    }
+    
+    return value;
 }
 
 
