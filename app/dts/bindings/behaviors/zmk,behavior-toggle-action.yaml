@@ -1,3 +1,5 @@
+description: Toggle between two behaviors on each key press
+
 compatible: "zmk,behavior-toggle-action"
 include: base.yaml
 
