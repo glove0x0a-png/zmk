@@ -15,7 +15,7 @@
 
 //define
 #define NORMAL_POLL_INTERVAL K_MSEC(10)   // 通常時: 10ms (100Hz)
-#define LOW_POWER_POLL_INTERVAL K_MSEC(100) // 省電力時: 100ms (10Hz)
+#define LOW_POWER_POLL_INTERVAL K_MSEC(500) // 省電力時: 500ms (2Hz)
 #define LOW_POWER_TIMEOUT_MS 5000    // 5秒間入力がないと省電力モードへ
 
 #define JIGGLE_INTERVAL_MS 10*1000         // 10sごとに動かす
@@ -180,8 +180,9 @@ static void az1uball_polling(struct k_timer *timer)
     uint32_t now = k_uptime_get();
     if (now - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
         data->last_jiggle_time = now;
-        az1uball_process_movement(data, (int)JIGGLE_DELTA_X, 0, AZ1UBALL_MOUSE_MAX_TIME, AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
-        input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x, true, K_NO_WAIT);
+        //ジグラー操作は、省電力切替に無関係。az1uball_process_movementは起動しない。//az1uball_process_movement(data, (int)JIGGLE_DELTA_X, 0, time_between_interrupts, AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME, AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
+        input_report_rel(data->dev, INPUT_REL_X, (int)JIGGLE_DELTA_X, true, K_NO_WAIT);
+        input_report_rel(data->dev, INPUT_REL_X, (int)-1*JIGGLE_DELTA_X, true, K_NO_WAIT);
     }
 }
 
