@@ -5,7 +5,7 @@
  */
 
 #define DT_DRV_COMPAT alps_ec11
-	
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/util.h>
@@ -20,93 +20,46 @@
 
 LOG_MODULE_REGISTER(EC11, CONFIG_SENSOR_LOG_LEVEL);
 
-static void ec11_get_ab_state(const struct device *dev) {
+static int ec11_get_ab_state(const struct device *dev) {
     const struct ec11_config *drv_cfg = dev->config;
-    struct ec11_data *drv_data        = dev->data;
 
-    drv_data->ol2_a_pin=drv_data->old_a_pin;
-    drv_data->ol2_b_pin=drv_data->old_b_pin;
-
-    drv_data->old_a_pin=drv_data->now_a_pin;
-    drv_data->old_b_pin=drv_data->now_b_pin;
-
-    drv_data->now_a_pin=(bool)gpio_pin_get_dt(&drv_cfg->a);
-    drv_data->now_b_pin=(bool)gpio_pin_get_dt(&drv_cfg->b);
-    return;
+    return (gpio_pin_get_dt(&drv_cfg->a) << 1) | gpio_pin_get_dt(&drv_cfg->b);
 }
 
 static int ec11_sample_fetch(const struct device *dev, enum sensor_channel chan) {
     struct ec11_data *drv_data = dev->data;
     const struct ec11_config *drv_cfg = dev->config;
-    //uint8_t val;
-    int8_t delta;
-
+    uint8_t curr = ec11_get_ab_state(dev);
+    int8_t delta = 0;
     __ASSERT_NO_MSG(chan == SENSOR_CHAN_ALL || chan == SENSOR_CHAN_ROTATION);
-
-    //val = ec11_get_ab_state(dev);
-    ec11_get_ab_state(dev);
-
-    //LOG_DBG("prev: %d, new: %d", drv_data->ab_state, val);
-
-
-//  A      (usb_wrk.b_old_pin[SW_R1] ^ usb_wrk.b_now_pin[SW_R2]) == HIGH
-//  B    &&(usb_wrk.b_old_pin[SW_R2] ^ usb_wrk.b_now_pin[SW_R1]) == LOW    )
-//    &&( LOW  = (usb_wrk.b_ol2_pin[SW_R1] ^ usb_wrk.b_old_pin[SW_R2])
-//     || HIGH = (usb_wrk.b_ol2_pin[SW_R2] ^ usb_wrk.b_old_pin[SW_R1]))
-
-//        (usb_wrk.b_old_pin[SW_R1] ^ usb_wrk.b_now_pin[SW_R2]) == LOW 
-//      &&(usb_wrk.b_old_pin[SW_R2] ^ usb_wrk.b_now_pin[SW_R1]) == HIGH  )
-//    && ( HIGH = (usb_wrk.b_ol2_pin[SW_R1] ^ usb_wrk.b_old_pin[SW_R2])
-//     ||  LOW  = (usb_wrk.b_ol2_pin[SW_R2] ^ usb_wrk.b_old_pin[SW_R1])))
-
-    delta = 0;
-    if(
-        (  (drv_data->old_a_pin ^ drv_data->now_b_pin) == 1
-        && (drv_data->old_b_pin ^ drv_data->now_a_pin) == 0 )
-      &&(  (drv_data->ol2_a_pin ^ drv_data->old_b_pin) == 0 
-         ||(drv_data->ol2_b_pin ^ drv_data->old_a_pin) == 1 )
-    )  delta = 1;
-    else if (
-        (  (drv_data->old_a_pin ^ drv_data->now_b_pin) == 0
-        && (drv_data->old_b_pin ^ drv_data->now_a_pin) == 1 )
-      &&(  (drv_data->ol2_a_pin ^ drv_data->old_b_pin) == 1 
-         ||(drv_data->ol2_b_pin ^ drv_data->old_a_pin) == 0 )
-    )  delta = -1;
-//    switch (val | (drv_data->ab_state << 2)) {
-//    case 0b0010:
-//    case 0b0100:
-//    case 0b1101:
-//    case 0b1011:
-//        delta = -1;
-//        break;
-//    case 0b0001:
-//    case 0b0111:
-//    case 0b1110:
-//    case 0b1000:
-//        delta = 1;
-//        break;
-//    default:
-//        delta = 0;
-//        break;
-//    }
-
-    LOG_DBG("Delta: %d", delta);
-
+    uint16_t transition = (drv_data->prev_ab_state << 4) | (drv_data->ab_state << 2) | curr;
+    switch (transition) {
+        // CW: 00→01→11, 01→11→10, 11→10→00
+        case 0b000111:
+        case 0b011110:
+        case 0b111000:
+            delta = 1;
+            break;
+        // CCW: 00→10→11, 10→11→01, 11→01→00
+        case 0b001110:
+        case 0b101101:
+        case 0b110000:
+            delta = -1;
+            break;
+        default:
+            delta = 0;
+            break;
+    }
     drv_data->pulses += delta;
-    //drv_data->ab_state = val;
-
-    // TODO: Temporary code for backwards compatibility to support
-    // the sensor channel rotation reporting *ticks* instead of delta of degrees.
-    // REMOVE ME
+    drv_data->prev_ab_state = drv_data->ab_state;
+    drv_data->ab_state = curr;
     if (drv_cfg->steps == 0) {
         drv_data->ticks = drv_data->pulses / drv_cfg->resolution;
         drv_data->delta = delta;
         drv_data->pulses %= drv_cfg->resolution;
     }
-
     return 0;
 }
-
 static int ec11_channel_get(const struct device *dev, enum sensor_channel chan,
                             struct sensor_value *val) {
     struct ec11_data *drv_data = dev->data;
@@ -143,29 +96,29 @@ static const struct sensor_driver_api ec11_driver_api = {
 };
 
 int ec11_init(const struct device *dev) {
-    //struct ec11_data *drv_data = dev->data;
+    struct ec11_data *drv_data = dev->data;
     const struct ec11_config *drv_cfg = dev->config;
 
-    LOG_DBG("A: %s %d B: %s %d resolution %d", drv_cfg->a.port->name, drv_cfg->a.pin,
-            drv_cfg->b.port->name, drv_cfg->b.pin, drv_cfg->resolution);
+    //LOG_DBG("A: %s %d B: %s %d resolution %d", drv_cfg->a.port->name, drv_cfg->a.pin,
+    //        drv_cfg->b.port->name, drv_cfg->b.pin, drv_cfg->resolution);
 
     if (!device_is_ready(drv_cfg->a.port)) {
-        LOG_ERR("A GPIO device is not ready");
+    //    LOG_ERR("A GPIO device is not ready");
         return -EINVAL;
     }
 
     if (!device_is_ready(drv_cfg->b.port)) {
-        LOG_ERR("B GPIO device is not ready");
+    //    LOG_ERR("B GPIO device is not ready");
         return -EINVAL;
     }
 
     if (gpio_pin_configure_dt(&drv_cfg->a, GPIO_INPUT)) {
-        LOG_DBG("Failed to configure A pin");
+    //    LOG_DBG("Failed to configure A pin");
         return -EIO;
     }
 
     if (gpio_pin_configure_dt(&drv_cfg->b, GPIO_INPUT)) {
-        LOG_DBG("Failed to configure B pin");
+    //    LOG_DBG("Failed to configure B pin");
         return -EIO;
     }
 
@@ -176,10 +129,8 @@ int ec11_init(const struct device *dev) {
     }
 #endif
 
-    //drv_data->ab_state = ec11_get_ab_state(dev);
-    //val = ec11_get_ab_state(dev);
-    ec11_get_ab_state(dev);
-
+    drv_data->ab_state = ec11_get_ab_state(dev);
+    drv_data->prev_ab_state = drv_data->ab_state;
     return 0;
 }
 

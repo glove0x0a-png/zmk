@@ -18,16 +18,9 @@ struct ec11_config {
     const uint8_t resolution;
 };
 
-
-
 struct ec11_data {
-    bool    now_a_pin;
-    bool    now_b_pin;
-    bool    old_a_pin;
-    bool    old_b_pin;
-    bool    ol2_a_pin;
-    bool    ol2_b_pin;
-    //uint8_t ab_state;
+    uint8_t ab_state;
+    uint8_t prev_ab_state;
     int8_t pulses;
     int8_t ticks;
     int8_t delta;
