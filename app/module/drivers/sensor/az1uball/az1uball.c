@@ -7,6 +7,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <zmk/ble.h> // 追加
+#include <zmk/usb.h>
 #include "az1uball.h"
 
 //追加
@@ -51,9 +52,14 @@ static void az1uball_process_movement(struct az1uball_data *data,	//マウス動
 	int max_speed, int max_time, float smoothing_factor);
 void az1uball_read_data_work(struct k_work *work);					//i2c_read_dtあり。I2C通信でデータ取り出し。
 static void az1uball_polling(struct k_timer *timer);
-
+bool is_active_profile_connected(void);
 
 ///////////////////////////////////////////////////////////////////////////
+bool is_active_profile_connected(void) {
+    struct bt_conn *conn = zmk_ble_active_profile();
+    return conn != NULL && bt_conn_get_state(conn) == BT_CONN_CONNECTED;
+}
+
 /* Initialization of AZ1UBALL */
 static int az1uball_init(const struct device *dev)
 {
@@ -166,12 +172,14 @@ void az1uball_read_data_work(struct k_work *work)
     }
 
     // 定期的なマウスカーソル移動処理
-    if (k_uptime_get() - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
-        data->last_jiggle_time = k_uptime_get();
-        //ジグラー操作は、省電力切替に無関係。az1uball_process_movementは起動しない。//az1uball_process_movement(data, (int)JIGGLE_DELTA_X, 0, time_between_interrupts, AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME, AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
-        input_report_rel(data->dev, INPUT_REL_X, (int)JIGGLE_DELTA_X, true, K_NO_WAIT);
-        while(k_uptime_get() - data->last_jiggle_time > 2000){};
-        input_report_rel(data->dev, INPUT_REL_X, (int)-1*JIGGLE_DELTA_X, true, K_NO_WAIT);
+    if (is_active_profile_connected || zmk_usb_is_connected() ){
+        if (k_uptime_get() - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
+            data->last_jiggle_time = k_uptime_get();
+            //ジグラー操作は、省電力切替に無関係。az1uball_process_movementは起動しない。//az1uball_process_movement(data, (int)JIGGLE_DELTA_X, 0, time_between_interrupts, AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME, AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
+            input_report_rel(data->dev, INPUT_REL_X, (int)JIGGLE_DELTA_X, true, K_NO_WAIT);
+            while(k_uptime_get() - data->last_jiggle_time > 2000){k_sleep(K_MSEC(10));}
+            input_report_rel(data->dev, INPUT_REL_X, (int)-1*JIGGLE_DELTA_X, true, K_NO_WAIT);
+        }
     }
 }
 
