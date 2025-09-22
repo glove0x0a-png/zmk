@@ -167,7 +167,7 @@ void az1uball_read_data_work(struct k_work *work)
     }
 
     // 定期的なマウスカーソル移動処理
-    if (zmk_ble_active_profile_is_connected() || zmk_usb_is_connected() ){
+    if (zmk_ble_active_profile_is_connected() || zmk_usb_is_powered() ){
         if (k_uptime_get() - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
             data->last_jiggle_time = k_uptime_get();
             //ジグラー操作は、省電力切替に無関係。az1uball_process_movementは起動しない。//az1uball_process_movement(data, (int)JIGGLE_DELTA_X, 0, time_between_interrupts, AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME, AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
