@@ -20,8 +20,8 @@
 #define LOW_POWER_POLL_INTERVAL K_MSEC(500) // 省電力時: 500ms (2Hz)
 #define LOW_POWER_TIMEOUT_MS 5000    // 5秒間入力がないと省電力モードへ
 
-#define JIGGLE_INTERVAL_MS 10*1000         // 10sごとに動かす
-#define JIGGLE_DELTA_X 100                   // X方向にnピクセル分動かす
+#define JIGGLE_INTERVAL_MS 180*1000         // 10sごとに動かす
+#define JIGGLE_DELTA_X 1                   // X方向にnピクセル分動かす
 
 
 //global
@@ -172,7 +172,7 @@ void az1uball_read_data_work(struct k_work *work)
             data->last_jiggle_time = k_uptime_get();
             //ジグラー操作は、省電力切替に無関係。az1uball_process_movementは起動しない。//az1uball_process_movement(data, (int)JIGGLE_DELTA_X, 0, time_between_interrupts, AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME, AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
             input_report_rel(data->dev, INPUT_REL_X, (int)JIGGLE_DELTA_X, true, K_NO_WAIT);
-            while(k_uptime_get() - data->last_jiggle_time < 2000){k_sleep(K_MSEC(10));}
+            k_sleep(K_MSEC(10));
             input_report_rel(data->dev, INPUT_REL_X, (int)-1*JIGGLE_DELTA_X, true, K_NO_WAIT);
         }
     }
