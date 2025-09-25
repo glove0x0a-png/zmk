@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <zmk/ble.h> // 追加
 #include <zmk/usb.h>
+#include <zmk/hid.h>    // HID usage定義用
 #include "az1uball.h"
 
 //追加
@@ -135,6 +136,18 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
     const struct az1uball_config *config = data->dev->config;
     float sensitivity = parse_sensitivity(config->sensitivity);
     float scaling_factor = sensitivity;
+
+    // 修飾キー状態を取得
+    bool lshift_pressed = zmk_keymap_keycode_state(HID_USAGE_KEY_LEFT_SHIFT);
+    bool lctrl_pressed  = zmk_keymap_keycode_state(HID_USAGE_KEY_LEFT_CONTROL);
+
+    // 動的倍率変更
+    if (lshift_pressed) {
+        scaling_factor *= 3.0f;
+    } else if (lctrl_pressed) {
+        scaling_factor *= 0.5f;
+    }
+
     if (time_between_interrupts < max_time) {
         float exponent = -3.0f * (float)time_between_interrupts / max_time;
         scaling_factor *= 1.0f + (max_speed - 1.0f) * expf(exponent);
