@@ -138,8 +138,9 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
     float scaling_factor = sensitivity;
 
     // 修飾キー状態を取得
-    bool lshift_pressed = zmk_keymap_keycode_state(HID_USAGE_KEY_LEFT_SHIFT);
-    bool lctrl_pressed  = zmk_keymap_keycode_state(HID_USAGE_KEY_LEFT_CONTROL);
+    uint8_t mods = zmk_hid_get_explicit_mods();
+    bool lshift_pressed = mods & HID_MOD_LSHIFT;
+    bool lctrl_pressed  = mods & HID_MOD_LCTRL;
 
     // 動的倍率変更
     if (lshift_pressed) {
