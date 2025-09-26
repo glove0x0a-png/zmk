@@ -105,12 +105,12 @@ void az1uball_read_data_work(struct k_work *work)
                                   AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME,
                                   AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
         //マウスの動きを滑らかに
-        for(int i=0;i<5;i++){
+        for(int i=0;i<10;i++){
             if (delta_x != 0) {
-                ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x/5, true, K_NO_WAIT);
+                ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x/10, true, K_NO_WAIT);
             }
             if (delta_y != 0) {
-                ret = input_report_rel(data->dev, INPUT_REL_Y, data->smoothed_y/5, true, K_NO_WAIT);
+                ret = input_report_rel(data->dev, INPUT_REL_Y, data->smoothed_y/10, true, K_NO_WAIT);
             }
         }
     }
