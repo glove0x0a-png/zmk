@@ -146,7 +146,8 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
     bool lctrl_pressed  = mods & 0x01;  //左Ctrl
 
     // 動的倍率変更
-    if (lshift_pressed) {
+//    if (lshift_pressed) {
+    if (lshift_pressed || zmk_keymap_highest_layer_active() ) {
         scaling_factor *= 3.0f;
     } else if (lctrl_pressed) {
         scaling_factor *= 0.5f;
