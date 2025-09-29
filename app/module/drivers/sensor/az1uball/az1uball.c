@@ -17,7 +17,7 @@
 #include <zmk/keymap.h>
 
 //define
-#define NORMAL_POLL_INTERVAL K_MSEC(50)   // 通常時: 50ms (20Hz)
+#define NORMAL_POLL_INTERVAL K_MSEC(10)   // 通常時: 10ms (100Hz)
 #define LOW_POWER_POLL_INTERVAL K_MSEC(250) // 省電力時:  250ms (4Hz)
 #define NON_ACTIVE_POLL_INTERVAL K_MSEC(2000) // 省電力時:  2000ms (0.5Hz)
 #define LOW_POWER_TIMEOUT_MS 5000    // 5秒間入力がないと省電力モードへ
@@ -105,12 +105,12 @@ void az1uball_read_data_work(struct k_work *work)
                                   AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME,
                                   AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
         //マウスの動きを滑らかに
-        for(int i=0;i<10;i++){
+        for(int i=0;i<3;i++){
             if (delta_x != 0) {
-                ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x/10, true, K_NO_WAIT);
+                ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x/3, true, K_NO_WAIT);
             }
             if (delta_y != 0) {
-                ret = input_report_rel(data->dev, INPUT_REL_Y, data->smoothed_y/10, true, K_NO_WAIT);
+                ret = input_report_rel(data->dev, INPUT_REL_Y, data->smoothed_y/3, true, K_NO_WAIT);
             }
         }
     }
