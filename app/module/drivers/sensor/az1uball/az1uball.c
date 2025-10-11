@@ -147,10 +147,11 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
 
     // 動的倍率変更
 //    if (lshift_pressed) {
+    scaling_factor *= 3.0f;         //defalut 3倍
     if (lshift_pressed || zmk_keymap_highest_layer_active() ) {
-        scaling_factor *= 3.0f;
+        ;                           //shift or layerチェンジ 1倍
     } else if (lctrl_pressed) {
-        scaling_factor *= 0.5f;
+        scaling_factor *= 0.5f;     //ctrl 0.5倍
     }
 
     if (time_between_interrupts < max_time) {
