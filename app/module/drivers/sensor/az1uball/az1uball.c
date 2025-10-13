@@ -118,10 +118,12 @@ void az1uball_read_data_work(struct k_work *work)
         } else if (delta_y != 0){  //レイヤーが3、かつ、y軸移動が <> 0
             if (delta_y > 10) {
                 // 下方向 → ボリュームダウン
-                ret = input_report(INPUT_VOLUMEDOWN, 1);
+                input_report(data->dev, INPUT_KEY_VOLUMEDOWN, 1, true, K_NO_WAIT); // 押下
+                input_report(data->dev, INPUT_KEY_VOLUMEDOWN, 0, true, K_NO_WAIT); // 離す
             } else if (delta_y < -10) {
                 // 上方向 → ボリュームアップ
-                ret = input_report(INPUT_VOLUMEUP, 1);
+                input_report(data->dev, INPUT_KEY_VOLUMEUP, 1, true, K_NO_WAIT);   // 押下
+                input_report(data->dev, INPUT_KEY_VOLUMEUP, 0, true, K_NO_WAIT);   // 離す
             }
         }
     }
