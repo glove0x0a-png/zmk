@@ -9,7 +9,6 @@
 #include <zmk/ble.h> // 追加
 #include <zmk/usb.h>
 #include <zmk/hid.h>    // HID usage定義用
-#include <zmk/input/hid.h>  // ← これが必要
 #include "az1uball.h"
 
 //追加
@@ -106,7 +105,9 @@ void az1uball_read_data_work(struct k_work *work)
         az1uball_process_movement(data, delta_x, delta_y, time_between_interrupts,
                                   AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME,
                                   AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
-        if (zmk_keymap_highest_layer_active()<3){  //レイヤーが3未満なら
+
+//        if (zmk_keymap_highest_layer_active()<3){  //レイヤーが3未満なら
+
             //マウスの動きを滑らかに
             for(int i=0;i<3;i++){
                 if (delta_x != 0) {
@@ -116,17 +117,20 @@ void az1uball_read_data_work(struct k_work *work)
                     ret = input_report_rel(data->dev, INPUT_REL_Y, data->smoothed_y/3, true, K_NO_WAIT);
                 }
             }
-        } else if (delta_y != 0){  //レイヤーが3、かつ、y軸移動が <> 0
-            if (delta_y > 10) {
-                // 下方向 → ボリュームダウン
-                input_report(data->dev, 0x0C, 0xEA, 1, true, (const struct zmk_behavior_binding_event *)NULL);
-                input_report(data->dev, 0x0C, 0xEA, 0, true, (const struct zmk_behavior_binding_event *)NULL);
-            } else if (delta_y < -10) {
-                // 上方向 → ボリュームアップ
-                input_report(data->dev, 0x0C, 0xE9, 1, true, (const struct zmk_behavior_binding_event *)NULL);
-                input_report(data->dev, 0x0C, 0xE9, 0, true, (const struct zmk_behavior_binding_event *)NULL);
-            }
-        }
+
+//        } else if (delta_y != 0){  //レイヤーが3、かつ、y軸移動が <> 0
+//            if (delta_y > 10) {
+//                // 下方向 → ボリュームダウン
+//                input_report(data->dev, 0x0C, 0xEA, 1, true, (const struct zmk_behavior_binding_event *)NULL);
+//                input_report(data->dev, 0x0C, 0xEA, 0, true, (const struct zmk_behavior_binding_event *)NULL);
+//            } else if (delta_y < -10) {
+//                // 上方向 → ボリュームアップ
+//                //input_report(data->dev, 0x0C, 0xE9, 1, true, (const struct zmk_behavior_binding_event *)NULL);
+//                //input_report(data->dev, 0x0C, 0xE9, 0, true, (const struct zmk_behavior_binding_event *)NULL);
+//                input_report(data->dev, 1 /* INPUT_EV_KEY */, 115 /* KEY_VOLUMEUP */, 1, true, K_NO_WAIT);
+//            }
+//        }
+
     }
 
     data->sw_pressed = (buf[4] & MSK_SWITCH_STATE) != 0;
