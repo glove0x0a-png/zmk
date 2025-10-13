@@ -35,7 +35,6 @@ volatile uint8_t AZ1UBALL_SCROLL_MAX_TIME = 1;
 volatile float AZ1UBALL_SCROLL_SMOOTHING_FACTOR = 0.5f;
 static int previous_x = 0;
 static int previous_y = 0;
-const struct zmk_behavior_binding_event *eve_null = NULL;
 //static enum az1uball_mode current_mode = AZ1UBALL_MODE_MOUSE;//default:mouse
 
 //struct
@@ -119,12 +118,12 @@ void az1uball_read_data_work(struct k_work *work)
         } else if (delta_y != 0){  //レイヤーが3、かつ、y軸移動が <> 0
             if (delta_y > 10) {
                 // 下方向 → ボリュームダウン
-                input_report(data->dev, INPUT_KEY_VOLUMEDOWN, 1, true, 0,eve_null); // 押下
-                input_report(data->dev, INPUT_KEY_VOLUMEDOWN, 0, true, 0,eve_null); // 離す
+                input_report(data->dev, 0x0C, 0xEA, 1, true, NULL);
+                input_report(data->dev, 0x0C, 0xEA, 0, true, NULL);
             } else if (delta_y < -10) {
                 // 上方向 → ボリュームアップ
-                input_report(data->dev, INPUT_KEY_VOLUMEUP, 1, true, 0,eve_null);   // 押下
-                input_report(data->dev, INPUT_KEY_VOLUMEUP, 0, true, 0,eve_null);   // 離す
+                input_report(data->dev, 0x0C, 0xE9, 1, true, NULL);
+                input_report(data->dev, 0x0C, 0xE9, 0, true, NULL);
             }
         }
     }
