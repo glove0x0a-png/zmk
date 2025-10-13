@@ -9,7 +9,6 @@
 #include <zmk/ble.h> // 追加
 #include <zmk/usb.h>
 #include <zmk/hid.h>    // HID usage定義用
-#include <zmk/hid_usage_consumer.h>
 #include "az1uball.h"
 
 //追加
