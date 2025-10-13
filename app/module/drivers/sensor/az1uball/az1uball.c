@@ -143,7 +143,7 @@ void az1uball_read_data_work(struct k_work *work)
 
         if (zmk_keymap_highest_layer_active() ) { //レイヤーチェンジ中なら
             input_report_key(data->dev, INPUT_BTN_0, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);  //マウスクリック
-        else {  //通常は
+        } else {  //通常は
             zmk_behavior_invoke_binding(&binding, event, data->sw_pressed);  //Jキー扱い
         }
 
