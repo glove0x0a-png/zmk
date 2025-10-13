@@ -100,17 +100,30 @@ void az1uball_read_data_work(struct k_work *work)
     int16_t delta_x = (int16_t)buf[1] - (int16_t)buf[0];
     int16_t delta_y = (int16_t)buf[3] - (int16_t)buf[2];
 
-    if (delta_x != 0 || delta_y != 0) {
+    if ( (delta_x != 0 || delta_y != 0 )  //
+    ) {
         az1uball_process_movement(data, delta_x, delta_y, time_between_interrupts,
                                   AZ1UBALL_MOUSE_MAX_SPEED, AZ1UBALL_MOUSE_MAX_TIME,
                                   AZ1UBALL_MOUSE_SMOOTHING_FACTOR);
-        //マウスの動きを滑らかに
-        for(int i=0;i<3;i++){
-            if (delta_x != 0) {
-                ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x/3, true, K_NO_WAIT);
+        if (zmk_keymap_highest_layer_active()<3){  //レイヤーが3未満なら
+            //マウスの動きを滑らかに
+            for(int i=0;i<3;i++){
+                if (delta_x != 0) {
+                    ret = input_report_rel(data->dev, INPUT_REL_X, data->smoothed_x/3, true, K_NO_WAIT);
+                }
+                if (delta_y != 0) {
+                    ret = input_report_rel(data->dev, INPUT_REL_Y, data->smoothed_y/3, true, K_NO_WAIT);
+                }
             }
-            if (delta_y != 0) {
-                ret = input_report_rel(data->dev, INPUT_REL_Y, data->smoothed_y/3, true, K_NO_WAIT);
+        } else if (delta_y != 0){  //レイヤーが3、かつ、y軸移動が <> 0
+            if (delta_y > 10) {
+                // 下方向 → ボリュームダウン
+                zmk_hid_consumer_behavior_press(ZMK_HID_USAGE_CONSUMER_VOLUME_DECREMENT);
+                zmk_hid_consumer_behavior_release(ZMK_HID_USAGE_CONSUMER_VOLUME_DECREMENT);
+            } else if (delta_y < -10) {
+                // 上方向 → ボリュームアップ
+                zmk_hid_consumer_behavior_press(ZMK_HID_USAGE_CONSUMER_VOLUME_INCREMENT);
+                zmk_hid_consumer_behavior_release(ZMK_HID_USAGE_CONSUMER_VOLUME_INCREMENT);
             }
         }
     }
@@ -122,7 +135,13 @@ void az1uball_read_data_work(struct k_work *work)
             .timestamp = k_uptime_get(),
             .layer = 0,
         };
-        zmk_behavior_invoke_binding(&binding, event, data->sw_pressed);
+
+        if (zmk_keymap_highest_layer_active() ) { //レイヤーチェンジ中なら
+            input_report_key(data->dev, INPUT_BTN_0, data->sw_pressed ? 1 : 0, true, K_NO_WAIT);  //マウスクリック
+        else {  //通常は
+            zmk_behavior_invoke_binding(&binding, event, data->sw_pressed);  //Jキー扱い
+        }
+
         data->sw_pressed_prev = data->sw_pressed;
     }
 
@@ -148,13 +167,10 @@ static void az1uball_process_movement(struct az1uball_data *data, int delta_x, i
     // 動的倍率変更
 //    if (lshift_pressed) {
     if (lshift_pressed || zmk_keymap_highest_layer_active() ) {
-        ;                           //shift or layerチェンジ 1倍
+        scaling_factor /= 2.0f;                           //shift or layerチェンジ 1/2倍
     } else if (lctrl_pressed) {
-        scaling_factor *= 0.5f;     //ctrl 0.5倍
-    } else {
-        scaling_factor *= 3.0f;         //defalut 3倍
+        scaling_factor /= 6.0f;                           //ctrl  1/6倍
     }
-
 
     if (time_between_interrupts < max_time) {
         float exponent = -3.0f * (float)time_between_interrupts / max_time;
