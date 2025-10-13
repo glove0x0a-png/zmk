@@ -9,6 +9,7 @@
 #include <zmk/ble.h> // 追加
 #include <zmk/usb.h>
 #include <zmk/hid.h>    // HID usage定義用
+#include <zmk/hid_usage_consumer.h>
 #include "az1uball.h"
 
 //追加
@@ -118,12 +119,10 @@ void az1uball_read_data_work(struct k_work *work)
         } else if (delta_y != 0){  //レイヤーが3、かつ、y軸移動が <> 0
             if (delta_y > 10) {
                 // 下方向 → ボリュームダウン
-                zmk_hid_consumer_behavior_press(ZMK_HID_USAGE_CONSUMER_VOLUME_DECREMENT);
-                zmk_hid_consumer_behavior_release(ZMK_HID_USAGE_CONSUMER_VOLUME_DECREMENT);
+                zmk_hid_consumer_send(0xEA);
             } else if (delta_y < -10) {
                 // 上方向 → ボリュームアップ
-                zmk_hid_consumer_behavior_press(ZMK_HID_USAGE_CONSUMER_VOLUME_INCREMENT);
-                zmk_hid_consumer_behavior_release(ZMK_HID_USAGE_CONSUMER_VOLUME_INCREMENT);
+                zmk_hid_consumer_send(0xE9);
             }
         }
     }
