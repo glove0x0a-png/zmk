@@ -118,10 +118,10 @@ void az1uball_read_data_work(struct k_work *work)
         } else if (delta_y != 0){  //レイヤーが3、かつ、y軸移動が <> 0
             if (delta_y > 10) {
                 // 下方向 → ボリュームダウン
-                zmk_hid_consumer_send(0xEA);
+                ret = input_report(INPUT_VOLUMEDOWN, 1);
             } else if (delta_y < -10) {
                 // 上方向 → ボリュームアップ
-                zmk_hid_consumer_send(0xE9);
+                ret = input_report(INPUT_VOLUMEUP, 1);
             }
         }
     }
