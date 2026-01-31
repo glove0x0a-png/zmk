@@ -1,0 +1,26 @@
+これからzmkに関する設定を変更します。
+MCUはXIAO BLE PLUSです。
+①これまでi2cで実装していたaz1ballを無効化します。(D4,D5)
+②あたらしくアナログ信号でD4をA4、D5をA5として実装します。
+　https:
+　	ドライバーはこちらを使用します。
+③アナログスティックの押し込みを新しくキーとして実装します。
+④スリープ設定などは現行踏襲とします。
+各ファイルを順次記載するので、変更点を示してください。
+C:\Users\sakura\OneDrive\Desktop\PicoW\_BB_ZMK\zmk-main\zmk-config\config\boards\shields\glove0x0a
+,	glove0x0a.conf						OK 2026/01/31 14:08
+	glove0x0a.dtsi						OK 2026/01/31 14:22
+	glove0x0a.overlay					OK 2026/01/31 14:26
+	glove0x0a.zmk.yml					OK 2026/01/31 14:28
+	Kconfig.shield						OK 2026/01/31 14:30
+	prj.conf							OK 2026/01/31 14:31
+C:\Users\sakura\OneDrive\Desktop\PicoW\_BB_ZMK\zmk-main\zmk-config\config
+	glove0x0a.json						OK 2026/01/31 14:32
+	glove0x0a.keymap					OK 2026/01/31 14:38
+	west.yml							OK 2026/01/31 14:39
+C:\Users\sakura\OneDrive\Desktop\PicoW\_BB_ZMK\zmk-main\zmk-config
+	build.yaml							OK 2026/01/31 14:40
+
+:
+`
+`
