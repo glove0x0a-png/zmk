@@ -160,8 +160,6 @@ jobs:
           name: zephyr-dts
           path: ${{ env.build_dir }}/zephyr/zephyr.dts
 
-        if: ${{ !cancelled() }}
-
       - name: Rename artifacts
         shell: sh -x {0}
         run: |
