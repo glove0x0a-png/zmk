@@ -37,7 +37,7 @@ jobs:
       - name: Fetch Build Matrix
         run: |
           echo "build_matrix=$(yq -oj -I0 ${{ inputs.build_matrix_path }})" >> $GITHUB_ENV
-          yq -oj "${{ inputs.build_matrix_path }}"
+          yq -oj ${{ inputs.build_matrix_path }}
 
   build:
     runs-on: ubuntu-latest
