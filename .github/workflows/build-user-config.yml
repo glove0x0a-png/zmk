@@ -55,7 +55,7 @@ jobs:
           repository: glove0x0a-png/zmk
           path: zmk
 
-      - name: Checkout
+      - name: Checkout user config
         uses: actions/checkout@v4
 
       - name: Create build directory
@@ -132,6 +132,7 @@ jobs:
         run: west build -s zmk/app -d "${{ env.build_dir }}" -b "${{ matrix.board }}" ${{ env.extra_west_args }} -- -DZMK_CONFIG=${{ env.base_dir }}/${{ inputs.config_path }} ${{ env.extra_cmake_args }} ${{ matrix.cmake-args }}
 
       - name: ${{ env.display_name }} Kconfig file
+        if: ${{ !cancelled() }}
         run: |
           if [ -f "${{ env.build_dir }}/zephyr/.config" ]
           then
@@ -139,7 +140,6 @@ jobs:
           else
             echo "No Kconfig output"
           fi
-        if: ${{ !cancelled() }}
 
       - name: ${{ env.display_name }} Devicetree file
         run: |
