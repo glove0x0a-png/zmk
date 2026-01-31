@@ -1,0 +1,3 @@
+config SHIELD_GLOVE0X0A
+    bool "glove0x0a"
+    depends on BOARD_SEEEDUINO_XIAO_BLE
