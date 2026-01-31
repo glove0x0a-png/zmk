@@ -155,7 +155,7 @@ jobs:
 
       - name: Upload zephyr.dts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: zephyr-dts
           path: ${{ env.build_dir }}/zephyr/zephyr.dts
