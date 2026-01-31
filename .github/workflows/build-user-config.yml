@@ -157,7 +157,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: zephyr-dts
+          name: zephyr-dts-${{ env.artifact_name }}
           path: ${{ env.build_dir }}/zephyr/zephyr.dts
 
       - name: Rename artifacts
