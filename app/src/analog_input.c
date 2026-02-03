@@ -7,6 +7,8 @@
 
 LOG_MODULE_REGISTER(analog_input, LOG_LEVEL_INF);
 
+static const struct device *input_dev;
+
 struct analog_channel_cfg {
     const struct device *adc_dev;
     uint8_t channel;
@@ -85,11 +87,13 @@ static void process_channel(struct analog_channel_cfg *cfg)
 
     delta = (delta * cfg->mul) / cfg->div;
 
-    input_report_rel(NULL, cfg->input_code, delta, true, K_NO_WAIT);
+    input_report_rel(input_dev, cfg->input_code, delta, true, K_NO_WAIT);
 }
 
 static void analog_thread(void)
 {
+    LOG_INF("Analog input thread started");
+
     while (1) {
         for (int i = 0; i < ARRAY_SIZE(channels); i++) {
             process_channel(&channels[i]);
@@ -97,5 +101,20 @@ static void analog_thread(void)
         k_msleep(10);
     }
 }
+
+static int analog_init(void)
+{
+    input_dev = input_device_get_binding("ANALOG_IN");
+
+    if (!input_dev) {
+        LOG_ERR("Failed to get input device");
+        return -ENODEV;
+    }
+
+    LOG_INF("Analog input device registered");
+    return 0;
+}
+
+SYS_INIT(analog_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 
 K_THREAD_DEFINE(analog_input_thread, 1024, analog_thread, NULL, NULL, NULL, 5, 0, 0);
