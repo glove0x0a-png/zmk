@@ -455,3 +455,5 @@ static const struct sensor_driver_api analog_input_driver_api = {
                           CONFIG_SENSOR_INIT_PRIORITY, &analog_input_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(ANALOG_INPUT_DEFINE)
+
+ZMK_INPUT_DEVICE_DEFINE(analog_input);
