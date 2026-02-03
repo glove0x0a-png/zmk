@@ -3,6 +3,7 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
+#include <stdlib.h>
 
 LOG_MODULE_REGISTER(analog_input, LOG_LEVEL_INF);
 
@@ -78,13 +79,13 @@ static void process_channel(struct analog_channel_cfg *cfg)
         delta = -delta;
     }
 
-    if (ABS(delta) < cfg->deadzone) {
+    if (abs(delta) < cfg->deadzone) {
         return;
     }
 
     delta = (delta * cfg->mul) / cfg->div;
 
-    input_report_rel(NULL, cfg->input_code, delta, true);
+    input_report_rel(NULL, cfg->input_code, delta, true, K_NO_WAIT);
 }
 
 static void analog_thread(void)
