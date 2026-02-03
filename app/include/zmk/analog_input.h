@@ -7,12 +7,6 @@
 #ifndef ZEPHYR_INCLUDE_ANALOG_INPUT_H_
 #define ZEPHYR_INCLUDE_ANALOG_INPUT_H_
 
-/**
- * @file analog_input.h
- *
- * @brief Header file for the analog_input driver.
- */
-
 #include <zephyr/device.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/drivers/gpio.h>
@@ -26,10 +20,6 @@ extern "C" {
 struct analog_input_data {
     const struct device *dev;
     struct adc_sequence as;
-#if CONFIG_ADC_ASYNC
-    struct k_poll_signal async_sig;
-    struct k_poll_event async_evt;
-#endif
     uint16_t *as_buff;
     int32_t *delta;
     int32_t *prev;
@@ -65,22 +55,13 @@ struct analog_input_config {
 	struct analog_input_io_channel io_channels[];
 };
 
-/* Helper macros used to convert sensor values. */
 #define ANALOG_INPUT_SVALUE_TO_SAMPLING_HZ(svalue) ((uint32_t)(svalue).val1)
 #define ANALOG_INPUT_SVALUE_TO_ENABLE(svalue) ((uint32_t)(svalue).val1)
 #define ANALOG_INPUT_SVALUE_TO_ACTIVE(svalue) ((uint32_t)(svalue).val1)
 
-/** @brief Sensor specific attributes of ANALOG_INPUT. */
 enum analog_input_attribute {
-
-    // setup polling timer
     ANALOG_INPUT_ATTR_SAMPLING_HZ,
-
-    // ENABLE sampling timer
 	ANALOG_INPUT_ATTR_ENABLE,
-
-    // ACTIVE input reporting
-    // or else, manually call sample_fetch & channel_get via sensor api.
 	ANALOG_INPUT_ATTR_ACTIVE,
 
 };
