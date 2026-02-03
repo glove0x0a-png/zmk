@@ -7,7 +7,7 @@
 
 LOG_MODULE_REGISTER(analog_input, LOG_LEVEL_INF);
 
-static const struct device *input_dev;
+static struct input_dev *input_dev;
 
 struct analog_channel_cfg {
     const struct device *adc_dev;
@@ -104,10 +104,10 @@ static void analog_thread(void)
 
 static int analog_init(void)
 {
-    input_dev = input_device_get_binding("ANALOG_IN");
+    input_dev = input_device_register("analog_input");
 
     if (!input_dev) {
-        LOG_ERR("Failed to get input device");
+        LOG_ERR("Failed to register input device");
         return -ENODEV;
     }
 
