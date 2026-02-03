@@ -1,4 +1,3 @@
-//https://github.com/badjeff/zmk-analog-input-driver/blob/main/src/analog_input.c
 /*
  * Copyright (c) 2022 The ZMK Contributors
  *
@@ -18,6 +17,10 @@
 LOG_MODULE_REGISTER(ANALOG_INPUT, CONFIG_ANALOG_INPUT_LOG_LEVEL);
 
 #include <zmk/drivers/analog_input.h>
+
+#include <zmk/sensors.h>
+#include <zmk/events/sensor_event.h>
+
 
 static int analog_input_report_data(const struct device *dev) {
     struct analog_input_data *data = dev->data;
@@ -398,6 +401,7 @@ static int analog_input_channel_get(const struct device *dev, enum sensor_channe
                                     struct sensor_value *val) {
     struct analog_input_data *data = dev->data;
     const struct analog_input_config *config = dev->config;
+    struct zmk_sensor_event *ev = zmk_sensor_event_from_device(dev);
 
     if (unlikely(chan != SENSOR_CHAN_ALL)) {
         LOG_DBG("Selected channel is not supported: %d.", chan);
@@ -413,9 +417,16 @@ static int analog_input_channel_get(const struct device *dev, enum sensor_channe
         if (!ch_cfg.report_on_change_only) {
             continue;
         }
-        if (i == 0)      val->val1 = data->delta[i];
-        else if (i == 1) val->val2 = data->delta[i];
+        if (i == 0){
+            val->val1 = data->delta[i];
+            ev->data[0] = data->delta[i];
+        }
+        else if (i == 1) {
+            val->val2 = data->delta[i];
+            ev->data[1] = data->delta[i];
+        }
     }
+    ZMK_EVENT_RAISE(ev);
 
     return 0;
 }
@@ -456,4 +467,4 @@ static const struct sensor_driver_api analog_input_driver_api = {
 
 DT_INST_FOREACH_STATUS_OKAY(ANALOG_INPUT_DEFINE)
 
-ZMK_INPUT_DEVICE_DEFINE(analog_input);
+ZMK_SENSOR_DRIVER_DEFINE(analog_input);
