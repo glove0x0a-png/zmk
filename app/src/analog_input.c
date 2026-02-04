@@ -1,120 +1,96 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/adc.h>
-#include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
-#include <stdlib.h>
+#include <zmk/sensors.h>
 
 LOG_MODULE_REGISTER(analog_input, LOG_LEVEL_INF);
 
-static struct input_dev *input_dev;
+struct analog_input_config {
+    uint8_t channel_id;
+};
 
-struct analog_channel_cfg {
+struct analog_input_data {
     const struct device *adc_dev;
-    uint8_t channel;
-    int32_t mid_mv;
-    int32_t range_mv;
-    int32_t deadzone;
-    int32_t mul;
-    int32_t div;
-    uint16_t input_code;
-    bool invert;
+    struct adc_channel_cfg channel_cfg;
+    int16_t sample_buffer;
 };
 
-static struct analog_channel_cfg channels[] = {
-    {
-        .adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc)),
-        .channel = 2,
-        .mid_mv = 1630,
-        .range_mv = 1600,
-        .deadzone = 10,
-        .mul = 3,
-        .div = 4,
-        .input_code = INPUT_REL_X,
-        .invert = true,
-    },
-    {
-        .adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc)),
-        .channel = 3,
-        .mid_mv = 1630,
-        .range_mv = 1600,
-        .deadzone = 10,
-        .mul = 3,
-        .div = 4,
-        .input_code = INPUT_REL_Y,
-        .invert = true,
-    },
-};
-
-static int read_mv(const struct device *adc_dev, uint8_t channel)
+static int analog_input_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
-    struct adc_channel_cfg cfg = {
-        .gain = ADC_GAIN_1,
-        .reference = ADC_REF_INTERNAL,
-        .acquisition_time = ADC_ACQ_TIME_DEFAULT,
-        .channel_id = channel,
-    };
+    struct analog_input_data *data = dev->data;
 
-    adc_channel_setup(adc_dev, &cfg);
-
-    int16_t raw;
-    struct adc_sequence seq = {
-        .channels = BIT(channel),
-        .buffer = &raw,
-        .buffer_size = sizeof(raw),
+    struct adc_sequence sequence = {
+        .channels = BIT(data->channel_cfg.channel_id),
+        .buffer = &data->sample_buffer,
+        .buffer_size = sizeof(data->sample_buffer),
         .resolution = 12,
     };
 
-    if (adc_read(adc_dev, &seq) < 0) {
-        return 0;
+    int ret = adc_read(data->adc_dev, &sequence);
+    if (ret < 0) {
+        LOG_ERR("ADC read failed (%d)", ret);
+        return ret;
     }
 
-    return raw * 3600 / 4096;
-}
-
-static void process_channel(struct analog_channel_cfg *cfg)
-{
-    int mv = read_mv(cfg->adc_dev, cfg->channel);
-    int delta = mv - cfg->mid_mv;
-
-    if (cfg->invert) {
-        delta = -delta;
-    }
-
-    if (abs(delta) < cfg->deadzone) {
-        return;
-    }
-
-    delta = (delta * cfg->mul) / cfg->div;
-
-    input_report_rel(input_dev, cfg->input_code, delta, true, K_NO_WAIT);
-}
-
-static void analog_thread(void)
-{
-    LOG_INF("Analog input thread started");
-
-    while (1) {
-        for (int i = 0; i < ARRAY_SIZE(channels); i++) {
-            process_channel(&channels[i]);
-        }
-        k_msleep(10);
-    }
-}
-
-static int analog_init(void)
-{
-    input_dev = input_device_register("analog_input");
-
-    if (!input_dev) {
-        LOG_ERR("Failed to register input device");
-        return -ENODEV;
-    }
-
-    LOG_INF("Analog input device registered");
     return 0;
 }
 
-SYS_INIT(analog_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+static int analog_input_channel_get(const struct device *dev,
+                                    enum sensor_channel chan,
+                                    struct sensor_value *val)
+{
+    struct analog_input_data *data = dev->data;
 
-K_THREAD_DEFINE(analog_input_thread, 1024, analog_thread, NULL, NULL, NULL, 5, 0, 0);
+    val->val1 = data->sample_buffer;  // raw ADC value
+    val->val2 = 0;
+
+    return 0;
+}
+
+static int analog_input_init(const struct device *dev)
+{
+    struct analog_input_data *data = dev->data;
+    const struct analog_input_config *cfg = dev->config;
+
+    data->adc_dev = DEVICE_DT_GET(DT_PARENT(DT_DRV_INST(0)));
+    if (!device_is_ready(data->adc_dev)) {
+        LOG_ERR("ADC device not ready");
+        return -ENODEV;
+    }
+
+    data->channel_cfg.channel_id = cfg->channel_id;
+    data->channel_cfg.differential = 0;
+    data->channel_cfg.gain = ADC_GAIN_1;
+    data->channel_cfg.reference = ADC_REF_INTERNAL;
+    data->channel_cfg.acquisition_time = ADC_ACQ_TIME_DEFAULT;
+
+    int ret = adc_channel_setup(data->adc_dev, &data->channel_cfg);
+    if (ret < 0) {
+        LOG_ERR("ADC channel setup failed (%d)", ret);
+        return ret;
+    }
+
+    LOG_INF("Analog input sensor initialized on channel %d", cfg->channel_id);
+    return 0;
+}
+
+static const struct sensor_driver_api analog_input_api = {
+    .sample_fetch = analog_input_sample_fetch,
+    .channel_get = analog_input_channel_get,
+};
+
+#define ANALOG_INPUT_DEFINE(inst)                                              \
+    static struct analog_input_data analog_input_data_##inst;                  \
+                                                                               \
+    static const struct analog_input_config analog_input_config_##inst = {     \
+        .channel_id = DT_INST_IO_CHANNELS_CELL(inst, channel),                 \
+    };                                                                         \
+                                                                               \
+    DEVICE_DT_INST_DEFINE(inst, analog_input_init, NULL,                       \
+                          &analog_input_data_##inst,                           \
+                          &analog_input_config_##inst,                         \
+                          POST_KERNEL, CONFIG_SENSOR_INIT_PRIORITY,            \
+                          &analog_input_api);
+
+DT_INST_FOREACH_STATUS_OKAY(ANALOG_INPUT_DEFINE)

@@ -1,0 +1,14 @@
+description: ZMK Analog Input Sensor
+
+compatible: "zmk,analog_input"
+
+include: adc.yaml
+
+properties:
+  io-channels:
+    required: true
+    type: phandle-array
+    description: ADC channel to read
+  label:
+    required: true
+    type: string
