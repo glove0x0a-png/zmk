@@ -2,7 +2,7 @@ description: ZMK Analog Input Sensor
 
 compatible: "zmk,analog_input"
 
-include: adc.yaml
+include: adc-controller.yaml
 
 properties:
   io-channels:
