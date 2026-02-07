@@ -19,6 +19,7 @@ LOG_MODULE_REGISTER(ANALOG_INPUT, CONFIG_ANALOG_INPUT_LOG_LEVEL);
 #include <zmk/drivers/analog_input.h>
 
 #if IS_ENABLED(CONFIG_ANALOG_INPUT_LOG_DBG_RAW)
+// LOG_DBG
 int32_t befmv=0;
 #endif
 
@@ -160,7 +161,7 @@ static int analog_input_report_data(const struct device *dev) {
             }
 
 #if IS_ENABLED(CONFIG_ANALOG_INPUT_LOG_DBG_REPORT)
-            LOG_DBG("input_report %u rv: %d  e:%d  c:%d", i, dv, ch_cfg.evt_type, ch_cfg.input_code);
+                    LOG_DBG("input_report %u rv: %d  e:%d  c:%d", i, dv, ch_cfg.evt_type, ch_cfg.input_code);
 #endif
             input_report(dev, ch_cfg.evt_type, ch_cfg.input_code, dv, i == idx_to_sync, K_NO_WAIT);
         }
