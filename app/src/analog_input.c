@@ -18,6 +18,10 @@ LOG_MODULE_REGISTER(ANALOG_INPUT, CONFIG_ANALOG_INPUT_LOG_LEVEL);
 
 #include <zmk/drivers/analog_input.h>
 
+#if IS_ENABLED(CONFIG_ANALOG_INPUT_LOG_DBG_RAW)
+int32_t befmv=0;
+#endif
+
 static int analog_input_report_data(const struct device *dev) {
     struct analog_input_data *data = dev->data;
     const struct analog_input_config *config = dev->config;
@@ -55,7 +59,7 @@ static int analog_input_report_data(const struct device *dev) {
                 return 0;
             }
             data->async_evt.signal->signaled = 0;
-    	    data->async_evt.state = K_POLL_STATE_NOT_READY;
+            data->async_evt.state = K_POLL_STATE_NOT_READY;
 #else
             int err = adc_read(adc, as);
             if (err < 0) {
@@ -69,7 +73,10 @@ static int analog_input_report_data(const struct device *dev) {
         int32_t mv = raw;
         adc_raw_to_millivolts(adc_ref_internal(adc), ADC_GAIN_1_6, as->resolution, &mv);
 #if IS_ENABLED(CONFIG_ANALOG_INPUT_LOG_DBG_RAW)
-        LOG_DBG("AIN%u raw: %d mv: %d", ch_cfg.adc_channel.channel_id, raw, mv);
+        if ( mv > befmv + 10 || mv < befmv - 10){
+          LOG_DBG("AIN%u raw: %d mv: %d", ch_cfg.adc_channel.channel_id, raw, mv);
+          befmv = mv;
+        }
 #endif
 
         int16_t v = mv - ch_cfg.mv_mid;
