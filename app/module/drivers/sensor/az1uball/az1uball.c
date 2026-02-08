@@ -14,7 +14,7 @@ struct az1uball_data {
     const struct device *dev;
     struct k_work work;
     struct k_timer polling_timer;
-    int64_t last_jiggle_time;
+    int64_t last_jiggle_time=0;
 };
 
 static struct az1uball_data az1uball_driver_data;
