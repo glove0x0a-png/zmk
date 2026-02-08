@@ -4,8 +4,7 @@
 #include <zephyr/kernel.h>
 
 #include <zmk/usb.h>
-#include <zmk/hid.h>
-#include <zmk/hid/mouse.h>
+#include <zmk/pointing.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/usb_conn_state_changed.h>
 
@@ -39,14 +38,11 @@ static void az1uball_jiggle_work(struct k_work *work)
         data->last_jiggle_time = now;
 
         /* 右へ */
-        zmk_hid_mouse_movement_set(JIGGLE_DELTA_X, 0);
-        zmk_hid_mouse_movement_update();
-
+        zmk_pointing_move(JIGGLE_DELTA_X, 0);
         k_sleep(K_MSEC(1000));
 
         /* 左へ戻す */
-        zmk_hid_mouse_movement_set(-JIGGLE_DELTA_X, 0);
-        zmk_hid_mouse_movement_update();
+        zmk_pointing_move(-JIGGLE_DELTA_X, 0);
     }
 }
 
@@ -111,9 +107,6 @@ static int az1uball_init(const struct device *dev)
     return 0;
 }
 
-/* ---------------------------------------------------------
- * デバイス定義
- * --------------------------------------------------------- */
 DEVICE_DEFINE(az1uball, "az1uball",
               az1uball_init, NULL,
               &az1uball_driver_data, NULL,
