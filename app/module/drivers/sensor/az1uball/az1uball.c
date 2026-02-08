@@ -4,16 +4,10 @@
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
-#include <math.h>
-#include <stdlib.h>
-#include <zmk/ble.h> // 追加
 #include <zmk/usb.h>
-#include <zmk/hid.h>    // HID usage定義用
 
 //追加
 #include <zmk/event_manager.h>
-#include <zmk/behavior.h>
-#include <zmk/keymap.h>
 
 #define  JIGGLE_DELTA_X 100
 
@@ -40,7 +34,7 @@ static void az1uball_jiggle_work(struct k_work *work)
 
     int64_t now = k_uptime_get();
 
-    if (now - data->last_jiggle_time >= K_MSEC(10000)) {
+    if (now - data->last_jiggle_time >= 10000) {
         data->last_jiggle_time = now;
 
         input_report_rel(data->dev, INPUT_REL_X, JIGGLE_DELTA_X, true, K_NO_WAIT);
