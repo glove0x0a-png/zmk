@@ -5,8 +5,8 @@
 #include <zmk/usb.h>
 #include <zmk/hid.h>
 
-#define JIGGLE_DELTA_X 5
-#define JIGGLE_INTERVAL_MS 10000
+#define JIGGLE_DELTA_X 1
+#define JIGGLE_INTERVAL_MS 180000
 
 struct az1uball_data {
     const struct device *dev;
@@ -36,7 +36,7 @@ static void az1uball_jiggle_work(struct k_work *work)
 
         /* ZMK HID API を使用して確実にマウス移動を送る */
         zmk_hid_mouse_movement_update(JIGGLE_DELTA_X, 0);
-        k_sleep(K_MSEC(500));
+        k_sleep(K_MSEC(10));
         zmk_hid_mouse_movement_update(-JIGGLE_DELTA_X, 0);
     }
 }
