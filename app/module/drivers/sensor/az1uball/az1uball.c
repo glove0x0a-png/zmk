@@ -81,3 +81,4 @@ DEVICE_DEFINE(az1uball, "az1uball",
               &az1uball_driver_data, NULL,
               APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
               NULL);
+
