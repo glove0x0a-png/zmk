@@ -1,13 +1,19 @@
 #define DT_DRV_COMPAT zmk_az1uball
 
-#include <zephyr/kernel.h>
 #include <zephyr/device.h>
-#include <zephyr/init.h>
-#include <zephyr/sys/printk.h>
-
+#include <zephyr/input/input.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/kernel.h>
+#include <math.h>
+#include <stdlib.h>
+#include <zmk/ble.h> // 追加
 #include <zmk/usb.h>
+#include <zmk/hid.h>    // HID usage定義用
+#include "az1uball.h"
+
 #include <zmk/event_manager.h>
-#include <zmk/events/usb_conn_state_changed.h>
+#include <zmk/behavior.h>
+#include <zmk/keymap.h>
 
 #define JIGGLE_DELTA_X 100
 #define JIGGLE_INTERVAL_MS (10 * 1000)
