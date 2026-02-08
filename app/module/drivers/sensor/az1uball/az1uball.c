@@ -5,8 +5,6 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
 #include <zmk/usb.h>
-
-//追加
 #include <zmk/event_manager.h>
 
 #define  JIGGLE_DELTA_X 100
@@ -63,16 +61,13 @@ static void az1uball_polling(struct k_timer *timer)
  * --------------------------------------------------------- */
 static int az1uball_usb_listener(const zmk_event_t *eh)
 {
-    const struct zmk_usb_conn_state_changed *ev =
-        as_zmk_usb_conn_state_changed(eh);
-
-    if (!ev) {
+    if (!is_zmk_usb_conn_state_changed(eh)) {
         return 0;
     }
 
     struct az1uball_data *data = &az1uball_driver_data;
 
-    if (ev->conn_state == ZMK_USB_CONN_STATE_POWERED) {
+    if (zmk_usb_is_powered()) {
         k_timer_start(&data->polling_timer, K_MSEC(1000), K_MSEC(1000));
     } else {
         k_timer_stop(&data->polling_timer);
