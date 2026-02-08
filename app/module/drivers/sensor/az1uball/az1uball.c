@@ -1,26 +1,24 @@
 #define DT_DRV_COMPAT zmk_az1uball
 
-
 #include <zephyr/device.h>
-#include <zephyr/input/input.h>
-#include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
 #include <zmk/usb.h>
-#include <zmk/event_manager.h>
+#include <zmk/hid.h>
 
-#define  JIGGLE_DELTA_X 100
+#define JIGGLE_DELTA_X 5
+#define JIGGLE_INTERVAL_MS 10000
 
 struct az1uball_data {
     const struct device *dev;
     struct k_work work;
     struct k_timer polling_timer;
-    int64_t last_jiggle_time=0;
+    int64_t last_jiggle_time;
 };
 
 static struct az1uball_data az1uball_driver_data;
 
 /* ---------------------------------------------------------
- * マウスジグラー本体
+ * マウスジグラー本体（ZMK HID API 使用）
  * --------------------------------------------------------- */
 static void az1uball_jiggle_work(struct k_work *work)
 {
@@ -33,12 +31,13 @@ static void az1uball_jiggle_work(struct k_work *work)
 
     int64_t now = k_uptime_get();
 
-    if (now - data->last_jiggle_time >= 10000) {
+    if (now - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
         data->last_jiggle_time = now;
 
-        input_report_rel(data->dev, INPUT_REL_X, JIGGLE_DELTA_X, true, K_NO_WAIT);
-        k_sleep(K_MSEC(1000));
-        input_report_rel(data->dev, INPUT_REL_X, -JIGGLE_DELTA_X, true, K_NO_WAIT);
+        /* ZMK HID API を使用して確実にマウス移動を送る */
+        zmk_hid_mouse_movement_update(JIGGLE_DELTA_X, 0);
+        k_sleep(K_MSEC(500));
+        zmk_hid_mouse_movement_update(-JIGGLE_DELTA_X, 0);
     }
 }
 
@@ -50,6 +49,7 @@ static void az1uball_polling(struct k_timer *timer)
     struct az1uball_data *data =
         CONTAINER_OF(timer, struct az1uball_data, polling_timer);
 
+    /* USB が powered のときだけ jiggle を実行 */
     if (zmk_usb_is_powered()) {
         k_work_submit(&data->work);
     } else {
@@ -70,9 +70,8 @@ static int az1uball_init(const struct device *dev)
     k_work_init(&data->work, az1uball_jiggle_work);
     k_timer_init(&data->polling_timer, az1uball_polling, NULL);
 
-    if (zmk_usb_is_powered()) {
-        k_timer_start(&data->polling_timer, K_MSEC(1000), K_MSEC(1000));
-    }
+    /* USB イベントが廃止されたため、常時タイマーを開始 */
+    k_timer_start(&data->polling_timer, K_MSEC(1000), K_MSEC(1000));
 
     return 0;
 }
