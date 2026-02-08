@@ -1,20 +1,29 @@
 #define DT_DRV_COMPAT zmk_az1uball
 
-#include <zephyr/device.h>
-#include <zephyr/input/input.h>
 #include <zephyr/kernel.h>
-#include <zmk/usb.h>
+#include <zephyr/device.h>
+#include <zephyr/init.h>
+#include <zephyr/sys/printk.h>
 
-#define JIGGLE_INTERVAL_MS (180 * 1000)
-#define JIGGLE_DELTA_X 1
+#include <zmk/usb.h>
+#include <zmk/event_manager.h>
+#include <zmk/events/usb_conn_state_changed.h>
+
+#define JIGGLE_DELTA_X 100
+#define JIGGLE_INTERVAL_MS (10 * 1000)
 
 struct az1uball_data {
     const struct device *dev;
     struct k_work work;
     struct k_timer polling_timer;
-    uint32_t last_jiggle_time;
+    int64_t last_jiggle_time;
 };
 
+static struct az1uball_data global_az1uball_data;
+
+/* ---------------------------------------------------------
+ * マウスジグラーの実際の処理（ここは必要に応じて実装）
+ * --------------------------------------------------------- */
 static void az1uball_read_data_work(struct k_work *work)
 {
     struct az1uball_data *data = CONTAINER_OF(work, struct az1uball_data, work);
@@ -32,23 +41,48 @@ static void az1uball_read_data_work(struct k_work *work)
 
         /* 右へ */
         input_report_rel(data->dev, INPUT_REL_X, JIGGLE_DELTA_X, true, K_NO_WAIT);
-        k_sleep(K_MSEC(10));
-
+        k_sleep(K_MSEC(1000));
         /* 左へ戻す */
         input_report_rel(data->dev, INPUT_REL_X, -JIGGLE_DELTA_X, true, K_NO_WAIT);
     }
 }
 
+/* ---------------------------------------------------------
+ * USB ON のときだけ実行される 1 秒周期ポーリング
+ * --------------------------------------------------------- */
 static void az1uball_polling(struct k_timer *timer)
 {
-    struct az1uball_data *data = CONTAINER_OF(timer, struct az1uball_data, polling_timer);
+    struct az1uball_data *data =
+        CONTAINER_OF(timer, struct az1uball_data, polling_timer);
 
-    /* USB が有効なときだけワーク実行 */
     if (zmk_usb_is_powered()) {
+        /* USB 給電中 → ジグラー動作 */
         k_work_submit(&data->work);
+    } else {
+        /* USB OFF → タイマー停止（DEEP SLEEP を許可） */
+        k_timer_stop(&data->polling_timer);
     }
 }
 
+/* ---------------------------------------------------------
+ * USB 電源状態変化コールバック
+ * --------------------------------------------------------- */
+static void usb_power_changed_cb(bool powered)
+{
+    struct az1uball_data *data = &global_az1uball_data;
+
+    if (powered) {
+        /* USB 接続 → ジグラー開始 */
+        k_timer_start(&data->polling_timer, K_MSEC(1000), K_MSEC(1000));
+    } else {
+        /* USB 切断 → ジグラー停止（DEEP SLEEP 可能） */
+        k_timer_stop(&data->polling_timer);
+    }
+}
+
+/* ---------------------------------------------------------
+ * 初期化処理
+ * --------------------------------------------------------- */
 static int az1uball_init(const struct device *dev)
 {
     struct az1uball_data *data = dev->data;
@@ -59,26 +93,25 @@ static int az1uball_init(const struct device *dev)
     k_work_init(&data->work, az1uball_read_data_work);
     k_timer_init(&data->polling_timer, az1uball_polling, NULL);
 
-    /* 常に一定周期でポーリング（USB が無効なら何もしない） */
-    k_timer_start(&data->polling_timer, K_MSEC(1000), K_MSEC(1000));
+    /* USB 状態変化コールバック登録 */
+    zmk_usb_register_power_callback(usb_power_changed_cb);
+
+    /* 初期状態が USB ON なら開始 */
+    if (zmk_usb_is_powered()) {
+        k_timer_start(&data->polling_timer, K_MSEC(1000), K_MSEC(1000));
+    }
 
     return 0;
 }
 
-#define AZ1UBALL_DEFINE(n)                                             \
-    static struct az1uball_data az1uball_data_##n;                     \
-    DEVICE_DT_INST_DEFINE(n,                                           \
-                          az1uball_init,                               \
-                          NULL,                                        \
-                          &az1uball_data_##n,                          \
-                          NULL,                                        \
-                          POST_KERNEL,                                 \
-                          CONFIG_INPUT_INIT_PRIORITY,                  \
-                          NULL);
+/* デバイス定義 */
+static struct az1uball_data az1uball_driver_data;
 
-DT_INST_FOREACH_STATUS_OKAY(AZ1UBALL_DEFINE)
-
-
+DEVICE_DEFINE(az1uball, "az1uball",
+              az1uball_init, NULL,
+              &az1uball_driver_data, NULL,
+              APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
+              NULL);
 
 
 //#define DT_DRV_COMPAT zmk_az1uball
@@ -301,3 +334,4 @@ DT_INST_FOREACH_STATUS_OKAY(AZ1UBALL_DEFINE)
 //
 //
 //
+
