@@ -1,5 +1,6 @@
 #define DT_DRV_COMPAT zmk_az1uball
 
+
 #include <zephyr/device.h>
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/i2c.h>
