@@ -40,7 +40,7 @@ static void az1uball_jiggle_work(struct k_work *work)
 
     int64_t now = k_uptime_get();
 
-    if (now - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
+    if (now - data->last_jiggle_time >= K_MSEC(10000)) {
         data->last_jiggle_time = now;
 
         input_report_rel(data->dev, INPUT_REL_X, JIGGLE_DELTA_X, true, K_NO_WAIT);
