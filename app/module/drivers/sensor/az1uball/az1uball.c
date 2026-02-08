@@ -57,29 +57,6 @@ static void az1uball_polling(struct k_timer *timer)
 }
 
 /* ---------------------------------------------------------
- * USB 状態変化イベントリスナー
- * --------------------------------------------------------- */
-static int az1uball_usb_listener(const zmk_event_t *eh)
-{
-    if (!is_zmk_usb_conn_state_changed(eh)) {
-        return 0;
-    }
-
-    struct az1uball_data *data = &az1uball_driver_data;
-
-    if (zmk_usb_is_powered()) {
-        k_timer_start(&data->polling_timer, K_MSEC(1000), K_MSEC(1000));
-    } else {
-        k_timer_stop(&data->polling_timer);
-    }
-
-    return 0;
-}
-
-ZMK_LISTENER(az1uball_usb_listener, az1uball_usb_listener);
-ZMK_SUBSCRIPTION(az1uball_usb_listener, zmk_usb_conn_state_changed);
-
-/* ---------------------------------------------------------
  * 初期化
  * --------------------------------------------------------- */
 static int az1uball_init(const struct device *dev)
