@@ -1,17 +1,13 @@
 #define DT_DRV_COMPAT zmk_az1uball
 
 #include <zephyr/device.h>
-#include <zephyr/input/input.h>
-#include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
-#include <math.h>
-#include <stdlib.h>
-#include <zmk/ble.h> // 追加
+
 #include <zmk/usb.h>
-#include <zmk/hid.h>    // HID usage定義用
+#include <zmk/hid.h>
+#include <zmk/hid/mouse.h>
 #include <zmk/event_manager.h>
-#include <zmk/behavior.h>
-#include <zmk/keymap.h>
+#include <zmk/events/usb_conn_state_changed.h>
 
 #define JIGGLE_DELTA_X 100
 #define JIGGLE_INTERVAL_MS (10 * 1000)
@@ -23,36 +19,39 @@ struct az1uball_data {
     int64_t last_jiggle_time;
 };
 
-static struct az1uball_data global_az1uball_data;
+static struct az1uball_data az1uball_driver_data;
 
 /* ---------------------------------------------------------
- * マウスジグラーの実際の処理（ここは必要に応じて実装）
+ * マウスジグラー本体
  * --------------------------------------------------------- */
-static void az1uball_read_data_work(struct k_work *work)
+static void az1uball_jiggle_work(struct k_work *work)
 {
-    struct az1uball_data *data = CONTAINER_OF(work, struct az1uball_data, work);
+    struct az1uball_data *data =
+        CONTAINER_OF(work, struct az1uball_data, work);
 
-    /* USB が有効でないなら何もしない */
     if (!zmk_usb_is_powered()) {
         return;
     }
 
-    uint32_t now = k_uptime_get();
+    int64_t now = k_uptime_get();
 
-    /* ジグラー動作 */
     if (now - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
         data->last_jiggle_time = now;
 
         /* 右へ */
-        input_report_rel(data->dev, INPUT_REL_X, JIGGLE_DELTA_X, true, K_NO_WAIT);
+        zmk_hid_mouse_movement_set(JIGGLE_DELTA_X, 0);
+        zmk_hid_mouse_movement_update();
+
         k_sleep(K_MSEC(1000));
+
         /* 左へ戻す */
-        input_report_rel(data->dev, INPUT_REL_X, -JIGGLE_DELTA_X, true, K_NO_WAIT);
+        zmk_hid_mouse_movement_set(-JIGGLE_DELTA_X, 0);
+        zmk_hid_mouse_movement_update();
     }
 }
 
 /* ---------------------------------------------------------
- * USB ON のときだけ実行される 1 秒周期ポーリング
+ * 1 秒周期ポーリング
  * --------------------------------------------------------- */
 static void az1uball_polling(struct k_timer *timer)
 {
@@ -60,32 +59,40 @@ static void az1uball_polling(struct k_timer *timer)
         CONTAINER_OF(timer, struct az1uball_data, polling_timer);
 
     if (zmk_usb_is_powered()) {
-        /* USB 給電中 → ジグラー動作 */
         k_work_submit(&data->work);
     } else {
-        /* USB OFF → タイマー停止（DEEP SLEEP を許可） */
         k_timer_stop(&data->polling_timer);
     }
 }
 
 /* ---------------------------------------------------------
- * USB 電源状態変化コールバック
+ * USB 状態変化イベントリスナー
  * --------------------------------------------------------- */
-static void usb_power_changed_cb(bool powered)
+static int az1uball_usb_listener(const zmk_event_t *eh)
 {
-    struct az1uball_data *data = &global_az1uball_data;
+    const struct zmk_usb_conn_state_changed *ev =
+        as_zmk_usb_conn_state_changed(eh);
 
-    if (powered) {
-        /* USB 接続 → ジグラー開始 */
+    if (!ev) {
+        return 0;
+    }
+
+    struct az1uball_data *data = &az1uball_driver_data;
+
+    if (ev->conn_state == ZMK_USB_CONN_STATE_POWERED) {
         k_timer_start(&data->polling_timer, K_MSEC(1000), K_MSEC(1000));
     } else {
-        /* USB 切断 → ジグラー停止（DEEP SLEEP 可能） */
         k_timer_stop(&data->polling_timer);
     }
+
+    return 0;
 }
 
+ZMK_LISTENER(az1uball_usb_listener, az1uball_usb_listener);
+ZMK_SUBSCRIPTION(az1uball_usb_listener, zmk_usb_conn_state_changed);
+
 /* ---------------------------------------------------------
- * 初期化処理
+ * 初期化
  * --------------------------------------------------------- */
 static int az1uball_init(const struct device *dev)
 {
@@ -94,13 +101,9 @@ static int az1uball_init(const struct device *dev)
     data->dev = dev;
     data->last_jiggle_time = k_uptime_get();
 
-    k_work_init(&data->work, az1uball_read_data_work);
+    k_work_init(&data->work, az1uball_jiggle_work);
     k_timer_init(&data->polling_timer, az1uball_polling, NULL);
 
-    /* USB 状態変化コールバック登録 */
-    zmk_usb_register_power_callback(usb_power_changed_cb);
-
-    /* 初期状態が USB ON なら開始 */
     if (zmk_usb_is_powered()) {
         k_timer_start(&data->polling_timer, K_MSEC(1000), K_MSEC(1000));
     }
@@ -108,9 +111,9 @@ static int az1uball_init(const struct device *dev)
     return 0;
 }
 
-/* デバイス定義 */
-static struct az1uball_data az1uball_driver_data;
-
+/* ---------------------------------------------------------
+ * デバイス定義
+ * --------------------------------------------------------- */
 DEVICE_DEFINE(az1uball, "az1uball",
               az1uball_init, NULL,
               &az1uball_driver_data, NULL,
