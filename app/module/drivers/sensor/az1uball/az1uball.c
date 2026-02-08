@@ -1,15 +1,21 @@
 #define DT_DRV_COMPAT zmk_az1uball
 
 #include <zephyr/device.h>
+#include <zephyr/input/input.h>
+#include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
-
+#include <math.h>
+#include <stdlib.h>
+#include <zmk/ble.h> // 追加
 #include <zmk/usb.h>
-#include <zmk/pointing.h>
-#include <zmk/event_manager.h>
-#include <zmk/events/usb_conn_state_changed.h>
+#include <zmk/hid.h>    // HID usage定義用
 
-#define JIGGLE_DELTA_X 100
-#define JIGGLE_INTERVAL_MS (10 * 1000)
+//追加
+#include <zmk/event_manager.h>
+#include <zmk/behavior.h>
+#include <zmk/keymap.h>
+
+#define  JIGGLE_DELTA_X 100
 
 struct az1uball_data {
     const struct device *dev;
@@ -37,12 +43,9 @@ static void az1uball_jiggle_work(struct k_work *work)
     if (now - data->last_jiggle_time >= JIGGLE_INTERVAL_MS) {
         data->last_jiggle_time = now;
 
-        /* 右へ */
-        zmk_pointing_move(JIGGLE_DELTA_X, 0);
+        input_report_rel(data->dev, INPUT_REL_X, JIGGLE_DELTA_X, true, K_NO_WAIT);
         k_sleep(K_MSEC(1000));
-
-        /* 左へ戻す */
-        zmk_pointing_move(-JIGGLE_DELTA_X, 0);
+        input_report_rel(data->dev, INPUT_REL_X, -JIGGLE_DELTA_X, true, K_NO_WAIT);
     }
 }
 
