@@ -139,14 +139,14 @@ static void indicate_connectivity_internal(void) {
             break;
     #endif
         default: // ZMK_TRANSPORT_NONE, neither BLE nor USB connected
-//    #if IS_ENABLED(CONFIG_ZMK_BLE)
-//            if (zmk_endpoint_get_preferred_transport() != ZMK_TRANSPORT_NONE &&
-//                zmk_ble_active_profile_is_open()) {
-//                LOG_CONN_CENTRAL(profile_index, "open", ADVERTISING);
-//                blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_ADVERTISING;
-//                break;
-//            }
-//    #endif
+    #if IS_ENABLED(CONFIG_ZMK_BLE)
+            if (zmk_endpoint_get_preferred_transport() != ZMK_TRANSPORT_NONE &&
+                zmk_ble_active_profile_is_open()) {
+                LOG_CONN_CENTRAL(profile_index, "open", ADVERTISING);
+                blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_ADVERTISING;
+                break;
+            }
+    #endif
             LOG_CONN_CENTRAL(-1, "no endpoints connected", DISCONNECTED);
             blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_DISCONNECTED;
             break;
