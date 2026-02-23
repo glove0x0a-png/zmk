@@ -21,22 +21,13 @@ struct az1uball_config {
 };
 
 struct az1uball_data {
-    const struct device *dev;
-    struct k_work work;
-    struct k_timer polling_timer;
-    struct k_mutex data_lock;
-    bool sw_pressed;
-    bool sw_pressed_prev;
-    atomic_t x_buffer;
-    atomic_t y_buffer;
-    uint32_t last_interrupt_time;
-    uint32_t previous_interrupt_time;
-    int previous_x;
-    int previous_y;
-    int smoothed_x;
-    int smoothed_y;
+    const struct device *dev;      //初期化
+    struct k_work work;            //polling時、読み取り関数登録 //az1uball_read_data_work
+    struct k_timer polling_timer;  //polling時、間隔制御         //az1uball_polling
+    struct k_mutex data_lock;      //polling時、時間制御
+
+    bool sw_pressed;               //前回、押下状態
+    float scaling_factor;          //感度。
+
     uint32_t last_activity_time;    // 最後の入力があった時間
-    uint32_t last_jiggle_time;
-    bool is_connected;
-    bool is_active;
 };
