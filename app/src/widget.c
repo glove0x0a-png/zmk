@@ -123,61 +123,34 @@ static void indicate_connectivity_internal(void) {
     uint8_t profile_index = zmk_ble_active_profile_index();
 #endif
     //2026.02.23 asada start
-//switch (zmk_endpoint_get_selected().transport) {
-//    case ZMK_TRANSPORT_USB: // USB connected and selected
-//#if IS_ENABLED(CONFIG_RGBLED_WIDGET_CONN_SHOW_USB)
-//        LOG_INF("USB connected, blinking %s", color_names[CONFIG_RGBLED_WIDGET_CONN_COLOR_USB]);
-//        blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_USB;
-//        break;
-//#endif
-//    case ZMK_TRANSPORT_BLE: // BLE connected and selected
-//#if IS_ENABLED(CONFIG_ZMK_BLE)
-//        LOG_CONN_CENTRAL(profile_index, "connected", CONNECTED);
-//        blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_CONNECTED;
-//        break;
-//#endif
-//    default: // ZMK_TRANSPORT_NONE, neither BLE nor USB connected
-//#if IS_ENABLED(CONFIG_ZMK_BLE)
-//        if (zmk_endpoint_get_preferred_transport() != ZMK_TRANSPORT_NONE &&
-//            zmk_ble_active_profile_is_open()) {
-//            LOG_CONN_CENTRAL(profile_index, "open", ADVERTISING);
-//            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_ADVERTISING;
-//            break;
-//        }
-//#endif
-//        LOG_CONN_CENTRAL(-1, "no endpoints connected", DISCONNECTED);
-//        blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_DISCONNECTED;
-//        break;
-//    }
-    uint8_t selected = zmk_endpoints_selected();
-
-    #if IS_ENABLED(CONFIG_RGBLED_WIDGET_CONN_SHOW_USB)
-    if (selected & BIT(ZMK_ENDPOINT_USB)) {
-        // USB connected and selected
-        LOG_INF("USB connected, blinking %s", color_names[CONFIG_RGBLED_WIDGET_CONN_COLOR_USB]);
-        blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_USB;
-    }
-    #endif
-
-    #if IS_ENABLED(CONFIG_ZMK_BLE)
-    else if (selected & BIT(ZMK_ENDPOINT_BLE)) {
-        // BLE connected and selected
-        LOG_CONN_CENTRAL(profile_index, "connected", CONNECTED);
-        blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_CONNECTED;
-    }
-    else if (zmk_endpoint_get_preferred_transport() != ZMK_TRANSPORT_NONE &&
-             zmk_ble_active_profile_is_open()) {
-        // BLE advertising
-        LOG_CONN_CENTRAL(profile_index, "open", ADVERTISING);
-        blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_ADVERTISING;
-    }
-    else {
-        // No endpoints connected
-        LOG_CONN_CENTRAL(-1, "no endpoints connected", DISCONNECTED);
-        blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_DISCONNECTED;
-    }
-    #endif
+    //switch (zmk_endpoint_get_selected().transport) {
+    switch (zmk_endpoints_selected().transport) {
     //2026.02.23 asada end
+        case ZMK_TRANSPORT_USB: // USB connected and selected
+    #if IS_ENABLED(CONFIG_RGBLED_WIDGET_CONN_SHOW_USB)
+            LOG_INF("USB connected, blinking %s", color_names[CONFIG_RGBLED_WIDGET_CONN_COLOR_USB]);
+            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_USB;
+            break;
+    #endif
+        case ZMK_TRANSPORT_BLE: // BLE connected and selected
+    #if IS_ENABLED(CONFIG_ZMK_BLE)
+            LOG_CONN_CENTRAL(profile_index, "connected", CONNECTED);
+            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_CONNECTED;
+            break;
+    #endif
+        default: // ZMK_TRANSPORT_NONE, neither BLE nor USB connected
+    #if IS_ENABLED(CONFIG_ZMK_BLE)
+            if (zmk_endpoint_get_preferred_transport() != ZMK_TRANSPORT_NONE &&
+                zmk_ble_active_profile_is_open()) {
+                LOG_CONN_CENTRAL(profile_index, "open", ADVERTISING);
+                blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_ADVERTISING;
+                break;
+            }
+    #endif
+            LOG_CONN_CENTRAL(-1, "no endpoints connected", DISCONNECTED);
+            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_DISCONNECTED;
+            break;
+    }
 #elif IS_ENABLED(CONFIG_ZMK_SPLIT_BLE)
     if (zmk_split_bt_peripheral_is_connected()) {
         LOG_CONN_PERIPHERAL("connected", CONNECTED);
