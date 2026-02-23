@@ -129,14 +129,14 @@ static void indicate_connectivity_internal(void) {
 
     switch (endpoint.transport) {
         case ZMK_TRANSPORT_USB:
-    #if IS_ENABLED(CONFIG_RGBLED_WIDGET_CONN_SHOW_USB)
-            LOG_INF("USB connected, blinking %s", color_names[CONFIG_RGBLED_WIDGET_CONN_COLOR_USB]);
-            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_USB;
-            break;
-    #else
-            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_CONNECTED;
-            break;
-    #endif
+//    #if IS_ENABLED(CONFIG_RGBLED_WIDGET_CONN_SHOW_USB)
+//            LOG_INF("USB connected, blinking %s", color_names[CONFIG_RGBLED_WIDGET_CONN_COLOR_USB]);
+//            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_USB;
+//            break;
+//    #else
+//            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_CONNECTED;
+//            break;
+//    #endif
 
         case ZMK_TRANSPORT_BLE:
     #if IS_ENABLED(CONFIG_ZMK_BLE)
