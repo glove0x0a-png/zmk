@@ -140,8 +140,8 @@ static void indicate_connectivity_internal(void) {
     #endif
         default: // ZMK_TRANSPORT_NONE, neither BLE nor USB connected
     #if IS_ENABLED(CONFIG_ZMK_BLE)
-            if ( (get_selected_transport() == ZMK_TRANSPORT_BLE || 
-                  get_selected_transport() == ZMK_TRANSPORT_USB )
+            if ( (zmk_endpoints_selected().transport  == ZMK_TRANSPORT_BLE || 
+                  zmk_endpoints_selected().transport  == ZMK_TRANSPORT_USB )
                 && zmk_ble_active_profile_is_open()) {
                 LOG_CONN_CENTRAL(profile_index, "open", ADVERTISING);
                 blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_ADVERTISING;
