@@ -107,6 +107,8 @@ target_sources_ifdef(CONFIG_ZMK_RGB_UNDERGLOW app PRIVATE src/rgb_underglow.c)
 target_sources_ifdef(CONFIG_ANALOG_INPUT app PRIVATE src/analog_input.c)
 target_sources_ifdef(CONFIG_ZMK_BACKLIGHT app PRIVATE src/backlight.c)
 target_sources_ifdef(CONFIG_ZMK_LOW_PRIORITY_WORK_QUEUE app PRIVATE src/workqueue.c)
+target_sources_ifdef(CONFIG_RGBLED_WIDGET app PRIVATE src/widget.c)
+target_sources_ifdef(CONFIG_ZMK_BEHAVIOR_RGBLED_WIDGET app PRIVATE src/behaviors/behavior_rgbled_widget.c)
 target_sources(app PRIVATE src/main.c)
 
 add_subdirectory(src/display/)
