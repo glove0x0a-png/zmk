@@ -27,6 +27,8 @@ struct az1uball_data {
     struct k_mutex data_lock;      //polling時、時間制御
 
     bool sw_pressed;               //前回、押下状態
+    float pre_x;                   //前回_X
+    float pre_y;                   //前回_Y
     float scaling_factor;          //感度。
 
     uint32_t last_activity_time;    // 最後の入力があった時間
