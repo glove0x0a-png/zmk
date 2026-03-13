@@ -204,7 +204,7 @@ void behavior_tap_dance_timer_handler(struct k_work *item) {
         return;
     }
     //release_tap_dance_behavior(tap_dance, tap_dance->release_at);
-    if (release_flg) release_tap_dance_behavior(tap_dance, event.timestamp);
+    if (release_flg) release_tap_dance_behavior(tap_dance, tap_dance->release_at);
     //
     ;
 }
