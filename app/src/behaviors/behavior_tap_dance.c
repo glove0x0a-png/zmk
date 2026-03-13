@@ -25,6 +25,8 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #define ZMK_BHV_TAP_DANCE_POSITION_FREE UINT32_MAX
 
+bool release_flg=false;   //リリースが早すぎる場合のみ、自動リリースに対応。
+
 struct behavior_tap_dance_config {
     uint32_t tapping_term_ms;
     size_t behavior_count;
@@ -133,6 +135,9 @@ static inline int release_tap_dance_behavior(struct active_tap_dance *tap_dance,
 #endif
     };
     clear_tap_dance(tap_dance);
+    //
+    release_flg=false;
+    //
     return zmk_behavior_invoke_binding(&binding, event, false);
 }
 
@@ -177,7 +182,8 @@ static int on_tap_dance_binding_released(struct zmk_behavior_binding *binding,
     tap_dance->is_pressed = false;
     if (tap_dance->tap_dance_decided) {
         //release_tap_dance_behavior(tap_dance, event.timestamp);
-        ;
+        if (release_flg) release_tap_dance_behavior(tap_dance, event.timestamp);
+        //
     }
     return ZMK_BEHAVIOR_OPAQUE;
 }
@@ -198,6 +204,8 @@ void behavior_tap_dance_timer_handler(struct k_work *item) {
         return;
     }
     //release_tap_dance_behavior(tap_dance, tap_dance->release_at);
+    if (release_flg) release_tap_dance_behavior(tap_dance, event.timestamp);
+    //
     ;
 }
 
@@ -227,6 +235,7 @@ static int tap_dance_position_state_changed_listener(const zmk_event_t *eh) {
         struct active_tap_dance *tap_dance = find_tap_dance(ev->position);
         if (tap_dance && tap_dance->tap_dance_decided) {
             release_tap_dance_behavior(tap_dance, ev->timestamp);
+            release_flg=true;
         }
         return ZMK_EV_EVENT_BUBBLE;
     }
