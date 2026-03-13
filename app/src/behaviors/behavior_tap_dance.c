@@ -199,7 +199,6 @@ void behavior_tap_dance_timer_handler(struct k_work *item) {
         release_tap_dance_behavior(tap_dance, tap_dance->release_at);
     }
     //
-
     if (tap_dance->is_pressed) {
         return;
     }
