@@ -19,8 +19,6 @@
 #include <zmk/events/modifiers_state_changed.h>
 #include <zmk/hid.h>
 
-#define ZMK_HID_MOD_LSHIFT (1 << 1)
-
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
@@ -32,7 +30,7 @@ struct behavior_mod_morph_config {
     zmk_mod_flags_t masked_mods;
 };
 
-struct behavior_mod_morph_data {z
+struct behavior_mod_morph_data {
     struct zmk_behavior_binding *pressed_binding;
 };
 
@@ -68,18 +66,8 @@ static int on_mod_morph_binding_released(struct zmk_behavior_binding *binding,
 
     struct zmk_behavior_binding *pressed_binding = data->pressed_binding;
     data->pressed_binding = NULL;
-    int err=0;
-
-    //start
-    //err = zmk_behavior_invoke_binding(pressed_binding, event, false);
-    // ★ LSHIFT の場合だけリリースを送る
-    if (pressed_binding->param1 == ZMK_HID_MOD_LSHIFT) {
-        err = zmk_behavior_invoke_binding(pressed_binding, event, false);
-    } else {
-        // ★ それ以外はリリースを送らない（＝押しっぱなし扱い）
-        LOG_DBG("Skipping release for non-LSHIFT mod-morph");
-    }
-    //end
+    int err;
+    err = zmk_behavior_invoke_binding(pressed_binding, event, false);
     zmk_hid_masked_modifiers_clear();
     return err;
 }
