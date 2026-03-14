@@ -32,7 +32,7 @@ struct behavior_mod_morph_config {
     zmk_mod_flags_t masked_mods;
 };
 
-struct behavior_mod_morph_data {z
+struct behavior_mod_morph_data {
     struct zmk_behavior_binding *pressed_binding;
 };
 
