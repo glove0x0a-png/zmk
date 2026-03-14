@@ -286,7 +286,8 @@ static void decide_balanced(struct active_hold_tap *hold_tap, enum decision_mome
         hold_tap->status = STATUS_TAP;
         return;
     case HT_OTHER_KEY_UP:
-        hold_tap->status = STATUS_HOLD_INTERRUPT;
+        //hold_tap->status = STATUS_HOLD_INTERRUPT;
+        hold_tap->status = STATUS_TAP;
         return;
     case HT_TIMER_EVENT:
         hold_tap->status = STATUS_HOLD_TIMER;
@@ -322,7 +323,8 @@ static void decide_tap_unless_interrupted(struct active_hold_tap *hold_tap,
         hold_tap->status = STATUS_TAP;
         return;
     case HT_OTHER_KEY_DOWN:
-        hold_tap->status = STATUS_HOLD_INTERRUPT;
+        //hold_tap->status = STATUS_HOLD_INTERRUPT;
+        hold_tap->status = STATUS_TAP;
         return;
     case HT_TIMER_EVENT:
         hold_tap->status = STATUS_TAP;
@@ -341,7 +343,8 @@ static void decide_hold_preferred(struct active_hold_tap *hold_tap, enum decisio
         hold_tap->status = STATUS_TAP;
         return;
     case HT_OTHER_KEY_DOWN:
-        hold_tap->status = STATUS_HOLD_INTERRUPT;
+        //hold_tap->status = STATUS_HOLD_INTERRUPT;
+        hold_tap->status = STATUS_TAP;
         return;
     case HT_TIMER_EVENT:
         hold_tap->status = STATUS_HOLD_TIMER;
