@@ -11,7 +11,7 @@
 #define LED2 23
 #define LED_COUNT 47   // WS2812 の総数に合わせる
 
-static const struct device *strip = DEVICE_DT_GET(DT_NODELABEL(ws2812));
+static const struct device *strip = DEVICE_DT_GET(DT_NODELABEL(led_strip));
 
 static struct led_rgb layer2_color = {0, 0, 255};     // 青
 static struct led_rgb layer3_color = {0, 255, 0};     // 緑
