@@ -11,7 +11,7 @@
 #define LED2 23
 #define LED_COUNT 47
 
-static const struct device *strip = DEVICE_DT_GET(DT_NODELABEL(zmk_underglow));
+static const struct device *strip = DEVICE_DT_GET(DT_NODELABEL(ws2812));
 
 static struct led_rgb layer2_color = {0, 0, 255};
 static struct led_rgb layer3_color = {0, 255, 0};
