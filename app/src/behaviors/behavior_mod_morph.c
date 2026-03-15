@@ -50,7 +50,7 @@ static int on_mod_morph_binding_pressed(struct zmk_behavior_binding *binding,
         //data->pressed_binding = (struct zmk_behavior_binding *)&cfg->morph_binding;
 
         // ★ SHIFT の場合だけ mask を適用
-        if (cfg->mods & (MOD_LSFT | MOD_RSFT)) {
+        if (cfg->mods & (MOD_LSFT | MOD_RSFT | MOD_LGUI | MOD_RGUI)) {
             zmk_hid_masked_modifiers_set(cfg->masked_mods);
         } else {
             // ★ ALT など他の修飾は mask しない

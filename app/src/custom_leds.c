@@ -1,17 +1,20 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/led_strip.h>
 
 #include <zmk/event_manager.h>
 #include <zmk/events/layer_state_changed.h>
 #include <zmk/events/modifiers_state_changed.h>
 #include <zmk/events/hid_indicators_changed.h>
 
-#include <zmk/led_strip.h>
-
 #define LED1 11
 #define LED2 23
 #define LED_COUNT 47
+
+// ★ ZMK の underglow → strip = <&ws2812> を参照
+static const struct device *strip =
+    DEVICE_DT_GET(DT_PHANDLE(DT_CHOSEN(zmk_underglow), strip));
 
 static struct led_rgb layer2_color = {0, 0, 255};
 static struct led_rgb layer3_color = {0, 255, 0};
@@ -42,7 +45,7 @@ static void update_leds() {
         buf[LED2] = caps_color;
     }
 
-    zmk_led_strip_update(buf, LED_COUNT);
+    led_strip_update_rgb(strip, buf, LED_COUNT);
 }
 
 int custom_leds_listener(const zmk_event_t *eh) {
