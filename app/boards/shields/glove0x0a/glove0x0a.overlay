@@ -1,0 +1,36 @@
+#include "glove0x0a.dtsi"
+#include <dt-bindings/led/led.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+&xiao_serial { status = "disabled"; };
+
+/ {
+    chosen {
+        zmk,input-devices = &az1uball;
+    };
+};
+
+/ {
+    behaviors {
+        btn0_to_key: btn0_to_key {
+            compatible = "zmk,behavior-btn0-to-key";
+            label = "BTN0_TO_KEY";
+        };
+    };
+};
+
+&xiao_i2c {
+    az1uball: az1uball@0a {
+        compatible = "zmk,az1uball";  // ← ✅ bindings と一致
+        reg = <0x0A>;
+        label = "az1uball";
+        status = "okay";
+        default-mode = "mouse";       // ← ✅ ハイフン表記で bindings と一致
+        sensitivity = "2x";
+    };
+};
+
+&az1uball {
+    bindings = <&btn0_to_key J>;
+};
+
