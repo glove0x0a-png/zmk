@@ -12,9 +12,12 @@
 #define LED2 23
 #define LED_COUNT 47
 
-// ★ ZMK の underglow → strip = <&ws2812> を参照
-static const struct device *strip =
-    DEVICE_DT_GET(DT_PHANDLE(DT_CHOSEN(zmk_underglow), strip));
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+
+#define STRIP_NODE DT_PHANDLE(DT_NODELABEL(zmk_underglow), strip)
+const struct device *strip = DEVICE_DT_GET(STRIP_NODE);
+
 
 static struct led_rgb layer2_color = {0, 0, 255};
 static struct led_rgb layer3_color = {0, 255, 0};
