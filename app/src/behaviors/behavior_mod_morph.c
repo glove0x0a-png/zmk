@@ -54,7 +54,7 @@ static int on_mod_morph_binding_pressed(struct zmk_behavior_binding *binding,
             // ★ GUI トリガなら ESC を先に送る（GUI が押されている間に）
             struct zmk_behavior_binding esc_binding = {
                 .behavior_dev = "key_press",
-                .param1 = HID_USAGE_KEY_ESCAPE,
+                .param1 = 0x29,
                 .param2 = 0,
             };
             struct zmk_behavior_binding_event esc_event = event;
