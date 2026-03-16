@@ -12,12 +12,7 @@
 #define LED2 23
 #define LED_COUNT 47
 
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-
-#define STRIP_NODE DT_PHANDLE(DT_NODELABEL(zmk_underglow), strip)
-const struct device *strip = DEVICE_DT_GET(STRIP_NODE);
-
+const struct device *strip = DEVICE_DT_GET(DT_NODELABEL(ws2812));
 
 static struct led_rgb layer2_color = {0, 0, 255};
 static struct led_rgb layer3_color = {0, 255, 0};
