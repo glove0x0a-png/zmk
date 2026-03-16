@@ -49,11 +49,25 @@ static int on_mod_morph_binding_pressed(struct zmk_behavior_binding *binding,
         //zmk_hid_masked_modifiers_set(cfg->masked_mods);
         //data->pressed_binding = (struct zmk_behavior_binding *)&cfg->morph_binding;
 
-        // ★ SHIFT の場合だけ mask を適用
+        //OSキーからmod-morphした場合は、ESCを挟む(OSメニュー起動を抑止する)
+        if (cfg->mods & (MOD_LGUI | MOD_RGUI)) {
+            // ★ GUI トリガなら ESC を先に送る（GUI が押されている間に）
+            struct zmk_behavior_binding esc_binding = {
+                .behavior_dev = DEVICE_DT_NAME(DT_CHOSEN(zmk_behavior_kp)),
+                .param1 = HID_USAGE_KEY_ESCAPE,
+                .param2 = 0,
+            };
+            struct zmk_behavior_binding_event esc_event = event;
+            // ESC press
+            zmk_behavior_invoke_binding(&esc_binding, esc_event, true);
+            // ESC release
+            zmk_behavior_invoke_binding(&esc_binding, esc_event, false);
+        }
+        // ★通常のmod-morphは、修飾キー状態をマスクする。(shift:a->TABの場合、shift中でもTABのみ送信)
         if (cfg->mods & (MOD_LSFT | MOD_RSFT | MOD_LGUI | MOD_RGUI)) {
             zmk_hid_masked_modifiers_set(cfg->masked_mods);
+        // ★ CTL,ALTは修飾キー mask しない(alt:a->TABの場合、alt中はalt+TABを送信)
         } else {
-            // ★ ALT など他の修飾は mask しない
             zmk_hid_masked_modifiers_set(0);
         }
         data->pressed_binding = (struct zmk_behavior_binding *)&cfg->morph_binding;
