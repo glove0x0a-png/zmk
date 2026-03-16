@@ -1,0 +1,9 @@
+# Copyright (c) 2022 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+if SHIELD_GLOVE0X0A
+
+config ZMK_KEYBOARD_NAME
+    default "glove0x0a"
+
+endif
