@@ -53,7 +53,7 @@ static int on_mod_morph_binding_pressed(struct zmk_behavior_binding *binding,
         if (cfg->mods & (MOD_LGUI | MOD_RGUI)) {
             // ★ GUI トリガなら ESC を先に送る（GUI が押されている間に）
             struct zmk_behavior_binding esc_binding = {
-                .behavior_dev = DEVICE_DT_NAME(DT_CHOSEN(zmk_behavior_kp)),
+                .behavior_dev = "key_press",
                 .param1 = HID_USAGE_KEY_ESCAPE,
                 .param2 = 0,
             };
