@@ -118,16 +118,17 @@ K_MSGQ_DEFINE(led_msgq, sizeof(struct blink_item), 16, 1);
 static void indicate_connectivity_internal(void) {
     struct blink_item blink = {.duration_ms = CONFIG_RGBLED_WIDGET_CONN_BLINK_MS};
     struct zmk_endpoint_instance endpoint = zmk_endpoints_selected();
+
 #if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+
     uint8_t profile_index = 0;
+
 #if IS_ENABLED(CONFIG_ZMK_BLE)
     profile_index = zmk_ble_active_profile_index();
 #endif
 
-
     switch (endpoint.transport) {
         case ZMK_TRANSPORT_USB:
-            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_CONNECTED;
 //    #if IS_ENABLED(CONFIG_RGBLED_WIDGET_CONN_SHOW_USB)
 //            LOG_INF("USB connected, blinking %s", color_names[CONFIG_RGBLED_WIDGET_CONN_COLOR_USB]);
 //            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_USB;
@@ -136,6 +137,7 @@ static void indicate_connectivity_internal(void) {
 //            blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_CONNECTED;
 //            break;
 //    #endif
+
         case ZMK_TRANSPORT_BLE:
     #if IS_ENABLED(CONFIG_ZMK_BLE)
             if (zmk_ble_active_profile_is_connected()) {
@@ -153,6 +155,7 @@ static void indicate_connectivity_internal(void) {
             }
             break;
     #endif
+
         default:
             // トランスポート不明または未接続
             LOG_CONN_CENTRAL(-1, "no endpoints connected", DISCONNECTED);
@@ -169,7 +172,9 @@ static void indicate_connectivity_internal(void) {
         LOG_CONN_PERIPHERAL("not connected", DISCONNECTED);
         blink.color = CONFIG_RGBLED_WIDGET_CONN_COLOR_DISCONNECTED;
     }
+
 #endif
+
     k_msgq_put(&led_msgq, &blink, K_NO_WAIT);
 }
 
