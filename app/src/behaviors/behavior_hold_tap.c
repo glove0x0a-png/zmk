@@ -286,8 +286,7 @@ static void decide_balanced(struct active_hold_tap *hold_tap, enum decision_mome
         hold_tap->status = STATUS_TAP;
         return;
     case HT_OTHER_KEY_UP:
-        //hold_tap->status = STATUS_HOLD_INTERRUPT;
-        hold_tap->status = STATUS_TAP;
+        hold_tap->status = STATUS_HOLD_INTERRUPT;
         return;
     case HT_TIMER_EVENT:
         hold_tap->status = STATUS_HOLD_TIMER;
@@ -323,8 +322,7 @@ static void decide_tap_unless_interrupted(struct active_hold_tap *hold_tap,
         hold_tap->status = STATUS_TAP;
         return;
     case HT_OTHER_KEY_DOWN:
-        //hold_tap->status = STATUS_HOLD_INTERRUPT;
-        hold_tap->status = STATUS_TAP;
+        hold_tap->status = STATUS_HOLD_INTERRUPT;
         return;
     case HT_TIMER_EVENT:
         hold_tap->status = STATUS_TAP;
@@ -343,8 +341,7 @@ static void decide_hold_preferred(struct active_hold_tap *hold_tap, enum decisio
         hold_tap->status = STATUS_TAP;
         return;
     case HT_OTHER_KEY_DOWN:
-        //hold_tap->status = STATUS_HOLD_INTERRUPT;
-        hold_tap->status = STATUS_TAP;
+        hold_tap->status = STATUS_HOLD_INTERRUPT;
         return;
     case HT_TIMER_EVENT:
         hold_tap->status = STATUS_HOLD_TIMER;
@@ -654,14 +651,10 @@ static int on_hold_tap_binding_released(struct zmk_behavior_binding *binding,
     // If these events were queued, the timer event may be queued too late or not at all.
     // We insert a timer event before the TH_KEY_UP event to verify.
     int work_cancel_result = k_work_cancel_delayable(&hold_tap->work);
-    // タイマーより後に離された場合は TIMER 判定
     if (event.timestamp > (hold_tap->timestamp + hold_tap->config->tapping_term_ms)) {
         decide_hold_tap(hold_tap, HT_TIMER_EVENT);
     }
-    // ★ ここで即 TAP 判定を強制
-    if (hold_tap->status == STATUS_UNDECIDED) {
-        decide_hold_tap(hold_tap, HT_KEY_UP);
-    }
+
     decide_hold_tap(hold_tap, HT_KEY_UP);
     decide_retro_tap(hold_tap);
     release_binding(hold_tap);
