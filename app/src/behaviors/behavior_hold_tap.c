@@ -654,7 +654,10 @@ static int on_hold_tap_binding_released(struct zmk_behavior_binding *binding,
     if (event.timestamp > (hold_tap->timestamp + hold_tap->config->tapping_term_ms)) {
         decide_hold_tap(hold_tap, HT_TIMER_EVENT);
     }
-
+    // ★ ここで即 TAP 判定を強制
+    if (hold_tap->status == STATUS_UNDECIDED) {
+        decide_hold_tap(hold_tap, HT_KEY_UP);
+    }
     decide_hold_tap(hold_tap, HT_KEY_UP);
     decide_retro_tap(hold_tap);
     release_binding(hold_tap);
