@@ -29,10 +29,6 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 // increase if you have keyboard with more keys.
 #define ZMK_BHV_HOLD_TAP_POSITION_NOT_USED 9999
 
-// ★現在押されているキー数（全キー共通）
-static int32_t currently_pressed_keys = 0;
-//static int32_t currently_pressed_mods = 0; // ★ 修飾キーだけカウント
-
 enum flavor {
     FLAVOR_HOLD_PREFERRED,
     FLAVOR_BALANCED,
@@ -290,7 +286,8 @@ static void decide_balanced(struct active_hold_tap *hold_tap, enum decision_mome
         hold_tap->status = STATUS_TAP;
         return;
     case HT_OTHER_KEY_UP:
-        hold_tap->status = STATUS_HOLD_INTERRUPT;
+        //hold_tap->status = STATUS_HOLD_INTERRUPT;
+        hold_tap->status = STATUS_TAP;
         return;
     case HT_TIMER_EVENT:
         hold_tap->status = STATUS_HOLD_TIMER;
@@ -326,7 +323,8 @@ static void decide_tap_unless_interrupted(struct active_hold_tap *hold_tap,
         hold_tap->status = STATUS_TAP;
         return;
     case HT_OTHER_KEY_DOWN:
-        hold_tap->status = STATUS_HOLD_INTERRUPT;
+        //hold_tap->status = STATUS_HOLD_INTERRUPT;
+        hold_tap->status = STATUS_TAP;
         return;
     case HT_TIMER_EVENT:
         hold_tap->status = STATUS_TAP;
@@ -345,7 +343,8 @@ static void decide_hold_preferred(struct active_hold_tap *hold_tap, enum decisio
         hold_tap->status = STATUS_TAP;
         return;
     case HT_OTHER_KEY_DOWN:
-        hold_tap->status = STATUS_HOLD_INTERRUPT;
+        //hold_tap->status = STATUS_HOLD_INTERRUPT;
+        hold_tap->status = STATUS_TAP;
         return;
     case HT_TIMER_EVENT:
         hold_tap->status = STATUS_HOLD_TIMER;
@@ -630,17 +629,6 @@ static int on_hold_tap_binding_pressed(struct zmk_behavior_binding *binding,
     LOG_DBG("%d new undecided hold_tap", event.position);
     undecided_hold_tap = hold_tap;
 
-    // ★ 他キーが押されているが、それが修飾キーだけなら TAP にしない
-    int32_t other_keys = currently_pressed_keys - 1; // この hold-tap 自身を除外
-//    int32_t other_mods = currently_pressed_mods;
-    
-    //  //  // ★ 非修飾キーが押されていたら TAP 強制
-    //if (other_keys > other_mods) {
-    if (other_keys > 0) {
-        decide_hold_tap(hold_tap, HT_KEY_UP);
-        return ZMK_BEHAVIOR_OPAQUE;
-    }
-
     if (is_quick_tap(hold_tap)) {
         decide_hold_tap(hold_tap, HT_QUICK_TAP);
     }
@@ -666,10 +654,11 @@ static int on_hold_tap_binding_released(struct zmk_behavior_binding *binding,
     // If these events were queued, the timer event may be queued too late or not at all.
     // We insert a timer event before the TH_KEY_UP event to verify.
     int work_cancel_result = k_work_cancel_delayable(&hold_tap->work);
+    // タイマーより後に離された場合は TIMER 判定
     if (event.timestamp > (hold_tap->timestamp + hold_tap->config->tapping_term_ms)) {
         decide_hold_tap(hold_tap, HT_TIMER_EVENT);
     }
-    // ★ ここで即 TAP 判定を強制 ※タイマー前に離された場合、即リリース
+    // ★ ここで即 TAP 判定を強制
     if (hold_tap->status == STATUS_UNDECIDED) {
         decide_hold_tap(hold_tap, HT_KEY_UP);
     }
@@ -745,15 +734,6 @@ static const struct behavior_driver_api behavior_hold_tap_driver_api = {
 static int position_state_changed_listener(const zmk_event_t *eh) {
     struct zmk_position_state_changed *ev = as_zmk_position_state_changed(eh);
 
-    // ★ 物理キーの押下数だけカウント
-    if (ev->state) {
-        currently_pressed_keys++;
-    } else {
-        if (currently_pressed_keys > 0) {
-            currently_pressed_keys--;
-        }
-    }
-
     update_hold_status_for_retro_tap(ev->position);
 
     if (undecided_hold_tap == NULL) {
@@ -815,17 +795,6 @@ static int position_state_changed_listener(const zmk_event_t *eh) {
 static int keycode_state_changed_listener(const zmk_event_t *eh) {
     // we want to catch layer-up events too... how?
     struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
-
-    // ★ 修飾キーだけカウント
-    //if (is_mod(ev->usage_page, ev->keycode)) {
-    //    if (ev->state) {
-    //        currently_pressed_mods++;
-    //    } else {
-    //        if (currently_pressed_mods > 0) {
-    //            currently_pressed_mods--;
-    //        }
-    //    }
-    //}
 
     if (ev->state && !is_mod(ev->usage_page, ev->keycode)) {
         store_last_tapped(ev->timestamp);
