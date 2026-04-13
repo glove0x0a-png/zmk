@@ -129,13 +129,6 @@ struct last_tapped {
 // int64 min since it will overflow if -1 is added
 struct last_tapped last_tapped = {INT32_MIN, INT32_MIN};
 
-
-
-// ★ 他キーがすでに押されていたら TAP 判定
-static bool other_key_was_already_pressed(struct active_hold_tap *hold_tap) {
-    return hold_tap->position_of_first_other_key_pressed != -1;
-}
-
 static void store_last_tapped(int64_t timestamp) {
     if (timestamp > last_tapped.timestamp) {
         last_tapped.position = INT32_MIN;
@@ -633,9 +626,12 @@ static int on_hold_tap_binding_pressed(struct zmk_behavior_binding *binding,
     LOG_DBG("%d new undecided hold_tap", event.position);
     undecided_hold_tap = hold_tap;
 
-    // ★ ここで他キー押下をチェックして TAP 判定
-    if (other_key_was_already_pressed(hold_tap)) {
-        decide_hold_tap(hold_tap, HT_KEY_UP); // 即 TAP 判定
+    // ★ ここがポイント：
+    // この時点で currently_pressed_keys には「このキー自身」も含まれているので、
+    // 2 以上なら「他のキーがすでに押されていた」と判断できる。
+    if (currently_pressed_keys > 1) {
+        LOG_DBG("%d forced TAP because other key(s) already pressed", event.position);
+        decide_hold_tap(hold_tap, HT_KEY_UP); // TAP 判定
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
@@ -742,6 +738,15 @@ static const struct behavior_driver_api behavior_hold_tap_driver_api = {
 
 static int position_state_changed_listener(const zmk_event_t *eh) {
     struct zmk_position_state_changed *ev = as_zmk_position_state_changed(eh);
+
+    // ★ まず押下数カウンタを更新
+    if (ev->state) { // key down
+        currently_pressed_keys++;
+    } else {         // key up
+        if (currently_pressed_keys > 0) {
+            currently_pressed_keys--;
+        }
+    }
 
     update_hold_status_for_retro_tap(ev->position);
 
