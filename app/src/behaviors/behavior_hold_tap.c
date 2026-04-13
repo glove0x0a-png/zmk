@@ -637,7 +637,7 @@ static int on_hold_tap_binding_pressed(struct zmk_behavior_binding *binding,
     //  //  // ★ 非修飾キーが押されていたら TAP 強制
     //if (other_keys > other_mods) {
     if (other_keys > 0) {
-        decide_hold_tap(hld_tap, HT_KEY_UP);
+        decide_hold_tap(hold_tap, HT_KEY_UP);
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
