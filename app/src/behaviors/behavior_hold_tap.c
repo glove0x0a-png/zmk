@@ -31,7 +31,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 // ★現在押されているキー数（全キー共通）
 static int32_t currently_pressed_keys = 0;
-static int32_t currently_pressed_mods = 0; // ★ 修飾キーだけカウント
+//static int32_t currently_pressed_mods = 0; // ★ 修飾キーだけカウント
 
 enum flavor {
     FLAVOR_HOLD_PREFERRED,
@@ -632,11 +632,12 @@ static int on_hold_tap_binding_pressed(struct zmk_behavior_binding *binding,
 
     // ★ 他キーが押されているが、それが修飾キーだけなら TAP にしない
     int32_t other_keys = currently_pressed_keys - 1; // この hold-tap 自身を除外
-    int32_t other_mods = currently_pressed_mods;
+//    int32_t other_mods = currently_pressed_mods;
     
-    // ★ 非修飾キーが押されていたら TAP 強制
-    if (other_keys > other_mods) {
-        decide_hold_tap(hold_tap, HT_KEY_UP);
+    //  //  // ★ 非修飾キーが押されていたら TAP 強制
+    //if (other_keys > other_mods) {
+    if (other_keys > 0) {
+        decide_hold_tap(hld_tap, HT_KEY_UP);
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
@@ -816,15 +817,15 @@ static int keycode_state_changed_listener(const zmk_event_t *eh) {
     struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
 
     // ★ 修飾キーだけカウント
-    if (is_mod(ev->usage_page, ev->keycode)) {
-        if (ev->state) {
-            currently_pressed_mods++;
-        } else {
-            if (currently_pressed_mods > 0) {
-                currently_pressed_mods--;
-            }
-        }
-    }
+    //if (is_mod(ev->usage_page, ev->keycode)) {
+    //    if (ev->state) {
+    //        currently_pressed_mods++;
+    //    } else {
+    //        if (currently_pressed_mods > 0) {
+    //            currently_pressed_mods--;
+    //        }
+    //    }
+    //}
 
     if (ev->state && !is_mod(ev->usage_page, ev->keycode)) {
         store_last_tapped(ev->timestamp);
