@@ -31,6 +31,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 // ★現在押されているキー数（全キー共通）
 static int32_t currently_pressed_keys = 0;
+static int32_t currently_pressed_mods = 0; // ★ 修飾キーだけカウント
 
 enum flavor {
     FLAVOR_HOLD_PREFERRED,
@@ -629,12 +630,14 @@ static int on_hold_tap_binding_pressed(struct zmk_behavior_binding *binding,
     LOG_DBG("%d new undecided hold_tap", event.position);
     undecided_hold_tap = hold_tap;
 
-    // ★ ここがポイント：
-    // この時点で currently_pressed_keys には「このキー自身」も含まれているので、
-    // 2 以上なら「他のキーがすでに押されていた」と判断できる。
-    if (currently_pressed_keys > 1) {
-        LOG_DBG("%d forced TAP because other key(s) already pressed", event.position);
-        decide_hold_tap(hold_tap, HT_KEY_UP); // TAP 判定
+    // ★ 他キーが押されているが、それが修飾キーだけなら TAP にしない
+    int32_t other_keys = currently_pressed_keys - 1; // この hold-tap 自身を除外
+    int32_t other_mods = currently_pressed_mods;     // 修飾キー数
+
+    // 「他キーが存在」かつ「その中に非修飾キーがある」なら TAP 強制
+    if (other_keys > other_mods) {
+        LOG_DBG("%d forced TAP because non-mod key already pressed", event.position);
+        decide_hold_tap(hold_tap, HT_KEY_UP);
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
@@ -666,7 +669,7 @@ static int on_hold_tap_binding_released(struct zmk_behavior_binding *binding,
     if (event.timestamp > (hold_tap->timestamp + hold_tap->config->tapping_term_ms)) {
         decide_hold_tap(hold_tap, HT_TIMER_EVENT);
     }
-    // ★ ここで即 TAP 判定を強制
+    // ★ ここで即 TAP 判定を強制 ※タイマー前に離された場合、即リリース
     if (hold_tap->status == STATUS_UNDECIDED) {
         decide_hold_tap(hold_tap, HT_KEY_UP);
     }
@@ -742,12 +745,20 @@ static const struct behavior_driver_api behavior_hold_tap_driver_api = {
 static int position_state_changed_listener(const zmk_event_t *eh) {
     struct zmk_position_state_changed *ev = as_zmk_position_state_changed(eh);
 
-    // ★ まず押下数カウンタを更新
+    // 押下数カウント
     if (ev->state) { // key down
         currently_pressed_keys++;
-    } else {         // key up
+
+        // ★ 修飾キーなら mods カウントも増やす
+        if (is_mod(ev->usage_page, ev->keycode)) {
+            currently_pressed_mods++;
+        }
+    } else { // key up
         if (currently_pressed_keys > 0) {
             currently_pressed_keys--;
+        }
+        if (is_mod(ev->usage_page, ev->keycode) && currently_pressed_mods > 0) {
+            currently_pressed_mods--;
         }
     }
 
