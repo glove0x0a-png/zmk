@@ -632,11 +632,10 @@ static int on_hold_tap_binding_pressed(struct zmk_behavior_binding *binding,
 
     // ★ 他キーが押されているが、それが修飾キーだけなら TAP にしない
     int32_t other_keys = currently_pressed_keys - 1; // この hold-tap 自身を除外
-    int32_t other_mods = currently_pressed_mods;     // 修飾キー数
-
-    // 「他キーが存在」かつ「その中に非修飾キーがある」なら TAP 強制
+    int32_t other_mods = currently_pressed_mods;
+    
+    // ★ 非修飾キーが押されていたら TAP 強制
     if (other_keys > other_mods) {
-        LOG_DBG("%d forced TAP because non-mod key already pressed", event.position);
         decide_hold_tap(hold_tap, HT_KEY_UP);
         return ZMK_BEHAVIOR_OPAQUE;
     }
@@ -745,20 +744,12 @@ static const struct behavior_driver_api behavior_hold_tap_driver_api = {
 static int position_state_changed_listener(const zmk_event_t *eh) {
     struct zmk_position_state_changed *ev = as_zmk_position_state_changed(eh);
 
-    // 押下数カウント
-    if (ev->state) { // key down
+    // ★ 物理キーの押下数だけカウント
+    if (ev->state) {
         currently_pressed_keys++;
-
-        // ★ 修飾キーなら mods カウントも増やす
-        if (is_mod(ev->usage_page, ev->keycode)) {
-            currently_pressed_mods++;
-        }
-    } else { // key up
+    } else {
         if (currently_pressed_keys > 0) {
             currently_pressed_keys--;
-        }
-        if (is_mod(ev->usage_page, ev->keycode) && currently_pressed_mods > 0) {
-            currently_pressed_mods--;
         }
     }
 
@@ -823,6 +814,17 @@ static int position_state_changed_listener(const zmk_event_t *eh) {
 static int keycode_state_changed_listener(const zmk_event_t *eh) {
     // we want to catch layer-up events too... how?
     struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
+
+    // ★ 修飾キーだけカウント
+    if (is_mod(ev->usage_page, ev->keycode)) {
+        if (ev->state) {
+            currently_pressed_mods++;
+        } else {
+            if (currently_pressed_mods > 0) {
+                currently_pressed_mods--;
+            }
+        }
+    }
 
     if (ev->state && !is_mod(ev->usage_page, ev->keycode)) {
         store_last_tapped(ev->timestamp);
