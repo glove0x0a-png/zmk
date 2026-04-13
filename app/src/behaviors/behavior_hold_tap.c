@@ -29,6 +29,9 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 // increase if you have keyboard with more keys.
 #define ZMK_BHV_HOLD_TAP_POSITION_NOT_USED 9999
 
+// ★現在押されているキー数（全キー共通）
+static int32_t currently_pressed_keys = 0;
+
 enum flavor {
     FLAVOR_HOLD_PREFERRED,
     FLAVOR_BALANCED,
