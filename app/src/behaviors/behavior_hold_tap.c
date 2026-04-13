@@ -131,15 +131,9 @@ struct last_tapped last_tapped = {INT32_MIN, INT32_MIN};
 
 
 
-// ★ 追加：他キーが押下状態なら即 TAP 判定
-static bool any_other_key_pressed(int32_t ht_pos) {
-    for (int i = 0; i < ZMK_MATRIX_LEN; i++) {
-        if (i == ht_pos) continue;
-        if (zmk_matrix_is_pressed(i)) {
-            return true;
-        }
-    }
-    return false;
+// ★ 他キーがすでに押されていたら TAP 判定
+static bool other_key_was_already_pressed(struct active_hold_tap *hold_tap) {
+    return hold_tap->position_of_first_other_key_pressed != -1;
 }
 
 static void store_last_tapped(int64_t timestamp) {
@@ -640,8 +634,8 @@ static int on_hold_tap_binding_pressed(struct zmk_behavior_binding *binding,
     undecided_hold_tap = hold_tap;
 
     // ★ ここで他キー押下をチェックして TAP 判定
-    if (any_other_key_pressed(event.position)) {
-        decide_hold_tap(hold_tap, HT_KEY_UP); // TAP 判定
+    if (other_key_was_already_pressed(hold_tap)) {
+        decide_hold_tap(hold_tap, HT_KEY_UP); // 即 TAP 判定
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
