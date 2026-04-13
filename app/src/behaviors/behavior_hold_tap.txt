@@ -129,19 +129,6 @@ struct last_tapped {
 // int64 min since it will overflow if -1 is added
 struct last_tapped last_tapped = {INT32_MIN, INT32_MIN};
 
-
-
-// ★ 追加：他キーが押下状態なら即 TAP 判定
-static bool any_other_key_pressed(int32_t ht_pos) {
-    for (int i = 0; i < ZMK_MATRIX_LEN; i++) {
-        if (i == ht_pos) continue;
-        if (zmk_matrix_is_pressed(i)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 static void store_last_tapped(int64_t timestamp) {
     if (timestamp > last_tapped.timestamp) {
         last_tapped.position = INT32_MIN;
@@ -638,12 +625,6 @@ static int on_hold_tap_binding_pressed(struct zmk_behavior_binding *binding,
 
     LOG_DBG("%d new undecided hold_tap", event.position);
     undecided_hold_tap = hold_tap;
-
-    // ★ ここで他キー押下をチェックして TAP 判定
-    if (any_other_key_pressed(event.position)) {
-        decide_hold_tap(hold_tap, HT_KEY_UP); // TAP 判定
-        return ZMK_BEHAVIOR_OPAQUE;
-    }
 
     if (is_quick_tap(hold_tap)) {
         decide_hold_tap(hold_tap, HT_QUICK_TAP);
