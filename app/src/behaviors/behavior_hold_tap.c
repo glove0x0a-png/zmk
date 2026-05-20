@@ -545,7 +545,9 @@ static void decide_hold_tap(struct active_hold_tap *hold_tap,
     }
 
     // ★ 他キー割込み時は必ず TAP に強制
-    if (decision_moment == HT_OTHER_KEY_DOWN) {
+    if (decision_moment == HT_OTHER_KEY_DOWN
+        && hold_tap->param_hold != LALT        //※ holdがLALTの場合の割込みは、hold(LALT)が優先
+    ){
         LOG_DBG("%d forced TAP due to other key interrupt", hold_tap->position);
         hold_tap->status = STATUS_TAP;
         undecided_hold_tap = NULL;
@@ -646,7 +648,7 @@ static int on_hold_tap_binding_pressed(struct zmk_behavior_binding *binding,
 
     // ★ ここで他キー押下をチェックして TAP 判定
     // if (other_key_was_already_pressed(hold_tap) ) {
-    if (other_key_was_already_pressed(hold_tap) && hold_tap->param_hold != LALT ) {
+    if (other_key_was_already_pressed(hold_tap) ) {
         decide_hold_tap(hold_tap, HT_KEY_UP); // 即 TAP 判定
     }
 
@@ -677,10 +679,6 @@ static int on_hold_tap_binding_released(struct zmk_behavior_binding *binding,
     int work_cancel_result = k_work_cancel_delayable(&hold_tap->work);
     if (event.timestamp > (hold_tap->timestamp + hold_tap->config->tapping_term_ms)) {
         decide_hold_tap(hold_tap, HT_TIMER_EVENT);
-    }
-    // ★ ここで即 TAP 判定を強制
-    if (hold_tap->status == STATUS_UNDECIDED) {
-        decide_hold_tap(hold_tap, HT_KEY_UP);
     }
     decide_hold_tap(hold_tap, HT_KEY_UP);
     decide_retro_tap(hold_tap);
