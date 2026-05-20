@@ -646,7 +646,7 @@ static int on_hold_tap_binding_pressed(struct zmk_behavior_binding *binding,
 
     // ★ ここで他キー押下をチェックして TAP 判定
     // if (other_key_was_already_pressed(hold_tap) ) {
-    if (other_key_was_already_pressed(hold_tap) || hold_tap->param_hold != ZMK_MOD_LALT ) {
+    if (other_key_was_already_pressed(hold_tap) || hold_tap->param_hold != MOD_LALT ) {
         decide_hold_tap(hold_tap, HT_KEY_UP); // 即 TAP 判定
     }
 
