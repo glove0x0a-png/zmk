@@ -42,9 +42,6 @@ int  direction = -1;
 
 extern struct az1uball_data az1uball_data_0;
 
-void zmk_pm_disable(void);
-void zmk_pm_enable(void);
-
 ///////////////////////////////////////////////////////////////////////////
 // #01.心臓部
 void az1uball_read_data_work(struct k_work *work)
