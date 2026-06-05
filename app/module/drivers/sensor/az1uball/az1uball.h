@@ -31,8 +31,8 @@ struct az1uball_data {
     float pre_y;                   //前回_Y
     float scaling_factor;          //感度。
 
-    uint32_t last_activity_time;    // 最後の入力があった時間
-    uint32_t last_jig_time;         // 最後のジグラー操作があった時間
-    int   layer;                    // レイヤー情報
-    bool  First_flg;                // mt 検知用フラグ
+    uint32_t last_activity_time;   //最後の入力があった時間
+    uint32_t last_jig_time;        //最後のジグラー操作があった時間
+    int      layer;                //レイヤー情報
+    bool     First_flg;            //描画フラグ
 };
