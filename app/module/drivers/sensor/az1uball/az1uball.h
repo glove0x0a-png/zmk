@@ -35,4 +35,5 @@ struct az1uball_data {
     uint32_t last_jig_time;        //最後のジグラー操作があった時間
     int      layer;                //レイヤー情報
     bool     First_flg;            //描画フラグ
+    int      direction;            //画面描画方向
 };
