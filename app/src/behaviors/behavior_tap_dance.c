@@ -246,12 +246,19 @@ static int tap_dance_position_state_changed_listener(const zmk_event_t *eh) {
         }
         stop_timer(tap_dance);
         LOG_DBG("Tap dance interrupted, activating tap-dance at %d", tap_dance->position);
+
         if (!tap_dance->tap_dance_decided) {
+
+            // ★ ダブルタップ扱いに強制する
+            tap_dance->counter = 2;
+
             press_tap_dance_behavior(tap_dance, ev->timestamp);
-            if (!tap_dance->is_pressed) {
-                //release_tap_dance_behavior(tap_dance, ev->timestamp);
-                ;
-            }
+            
+            // release も必要なら有効化。2026.06.08は、mo 3 -> 他キー割込み優先なので、リリースしない。
+            //if (!tap_dance->is_pressed) {
+            //     release_tap_dance_behavior(tap_dance, ev->timestamp);
+            //}
+
             return ZMK_EV_EVENT_BUBBLE;
         }
     }
