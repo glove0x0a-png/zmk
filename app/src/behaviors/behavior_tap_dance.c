@@ -248,10 +248,8 @@ static int tap_dance_position_state_changed_listener(const zmk_event_t *eh) {
         LOG_DBG("Tap dance interrupted, activating tap-dance at %d", tap_dance->position);
 
         if (!tap_dance->tap_dance_decided) {
-
-            // ★ ダブルタップ扱いに強制する
-            tap_dance->counter = 2;
-
+            //★ 他キー割込みは シングルタップ扱いに強制する
+            tap_dance->counter = 1;
             press_tap_dance_behavior(tap_dance, ev->timestamp);
             
             // release も必要なら有効化。2026.06.08は、mo 3 -> 他キー割込み優先なので、リリースしない。
