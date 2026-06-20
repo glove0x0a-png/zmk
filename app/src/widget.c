@@ -1,4 +1,4 @@
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+#ifdef CONFIG_ZMK_SPLIT_ROLE_CENTRAL
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/led.h>
