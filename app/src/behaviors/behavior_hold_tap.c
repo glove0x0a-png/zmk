@@ -547,8 +547,8 @@ static void decide_hold_tap(struct active_hold_tap *hold_tap,
     // ★ 他キー割込み時は必ず TAP に強制
     if (decision_moment == HT_OTHER_KEY_DOWN
        && hold_tap->param_hold != LALT                         //holdがLALTの場合の割込みは、hold(LALT)が優先
-       && hold_tap->position_of_first_other_key_pressed != 33  //割込みがmodの場合は、holdへ倒す。
-       && hold_tap->position_of_first_other_key_pressed != 35  //〃
+       && hold_tap->position_of_first_other_key_pressed != 18  //割込みがmodの場合は、holdへ倒す。
+       && hold_tap->position_of_first_other_key_pressed != 36  //〃
        
     ){
         LOG_DBG("%d forced TAP due to other key interrupt", hold_tap->position);
