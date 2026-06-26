@@ -1,4 +1,4 @@
-/*
+./*
  * Copyright (c) 2020 The ZMK Contributors
  *
  * SPDX-License-Identifier: MIT
@@ -546,7 +546,11 @@ static void decide_hold_tap(struct active_hold_tap *hold_tap,
 
     // ★ 他キー割込み時は必ず TAP に強制
     if (decision_moment == HT_OTHER_KEY_DOWN
-        && hold_tap->param_hold != LALT        //※ holdがLALTの場合の割込みは、hold(LALT)が優先
+        &&
+       (  hold_tap->param_hold != LALT    //※ holdがLALTの場合の割込みは、hold(LALT)が優先
+       || hold_tap->position_of_first_other_key_pressed != 33
+       || hold_tap->position_of_first_other_key_pressed != 35
+       )
     ){
         LOG_DBG("%d forced TAP due to other key interrupt", hold_tap->position);
         hold_tap->status = STATUS_TAP;
@@ -749,30 +753,10 @@ static const struct behavior_driver_api behavior_hold_tap_driver_api = {
 #endif // IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
 };
 
-static bool is_layer_key(uint32_t pos) {
-    return pos == 33 || pos == 35; // ← MOキーのpositionを入れる
-}
-
 static int position_state_changed_listener(const zmk_event_t *eh) {
     struct zmk_position_state_changed *ev = as_zmk_position_state_changed(eh);
 
     update_hold_status_for_retro_tap(ev->position);
-
-    // undecided_hold_tap が存在する状態で、他キーが押されたときの処理
-    if (undecided_hold_tap != NULL) {
-
-        // ★ レイヤーキーが押されたら HOLD 強制
-        if (ev->state && is_layer_key(ev->position)) {
-            LOG_DBG("%d forced HOLD due to layer key press", undecided_hold_tap->position);
-
-            undecided_hold_tap->status = STATUS_HOLD_INTERRUPT;
-            press_binding(undecided_hold_tap);
-            undecided_hold_tap = NULL;
-            release_captured_events();
-
-            return ZMK_EV_EVENT_CAPTURED;
-        }
-    }
 
     if (undecided_hold_tap == NULL) {
         LOG_DBG("%d bubble (no undecided hold_tap active)", ev->position);
