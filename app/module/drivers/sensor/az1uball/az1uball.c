@@ -22,7 +22,7 @@
 #define BLE_POLL_MS   K_MSEC(1000)   // 省電力時ポーリング間隔
 #define JIG_POLL_MS   K_MSEC(240000) // ジグラー間隔(ms)
 #define JIG_WAIT_MS   239*1000       // ジグラー閾値(ms) = JIG_POLL_MS - ちょっと。
-
+#define JIG_LAYER     1
 
 #define BLE_SLEEP_MS    5*1000 // BLE時の未入力待ち時間(ms)
 #define IDLE_MS        10*1000 // 待機突入時間
@@ -48,27 +48,38 @@ extern volatile bool zmk_sleep_inhibit; //スリープ抑止フラグ
 // #01.心臓部
 void az1uball_read_data_work(struct k_work *work)
 {
-    uint8_t buf[5]; //buf
+    uint8_t  buf[5]; //buf
     uint32_t now = k_uptime_get(); //実行時刻
+    int      lock_direct=1;
+
     struct az1uball_data *data = CONTAINER_OF(work, struct az1uball_data, work); //az1uball
     data->layer = zmk_keymap_highest_layer_active(); //現レイヤ
-    zmk_sleep_inhibit = ( data->layer == 1 ); //レイヤー1ならスリープ抑止
+    zmk_sleep_inhibit = ( data->layer == JIG_LAYER ); //レイヤー1ならスリープ抑止
 
     const struct az1uball_config *config = data->dev->config; //config
     float scaling = data->scaling_factor; //比率
 
-    bool rctrl = zmk_hid_get_explicit_mods() & 0x10;
-    bool lgui  = zmk_hid_get_explicit_mods() & 0x08;
+    bool rctrl = zmk_hid_get_explicit_mods() & 0x10; //右Ctrl
+    bool lgui  = zmk_hid_get_explicit_mods() & 0x08; //左GUI
 
-    if (    zmk_hid_get_explicit_mods() & 0x10  //右Ctrl
-         || zmk_hid_get_explicit_mods() & 0x08  //左GUI
-    ){
-        if( !data->First_flg )                  //検知時に1回だけ
+    if ( rctrl || lgui ){
+        if( !data->First_flg )                  //検知時に1回だけ(押しっぱなし対策)
         {
-            data->First_flg = true;
-            data->direction *= -1;
+            data->First_flg = true;             //〃
+
+            if ( data->lock ){                    //マウス有効化時(ロックあり⇒なし)
+                data->lock  = false;
+                lock_direct = 1;                  //下が有効化
+                data->last_activity_time = now;   //マウス最終操作時刻更新(ポーリング高速化へ)
+            }
+            else{                     //マウス無効化時(ロックなし⇒あり)
+                data->lock  = true;
+                lock_direct = -1;                           //上が無効化
+                data->last_activity_time = now - IDLE_MS;   //マウス最終操作時刻更新(ポーリング低速化)
+            }
+
             for (int i = 0; i < 5; i++) {
-                input_report_rel(data->dev, INPUT_REL_Y, data->direction, true , K_NO_WAIT);
+                input_report_rel(data->dev, INPUT_REL_Y, lock_direct, true , K_NO_WAIT);
                 k_sleep(K_MSEC( 5));
             }
         }
@@ -82,12 +93,17 @@ void az1uball_read_data_work(struct k_work *work)
     i2c_read_dt(&config->i2c, buf, sizeof(buf));
 
     float delta_x=0,delta_y=0; //移動距離(誤作動防止のためDED_ZONE考慮)
-    if     ( abs((int16_t)buf[1]) > abs(buf[0])) delta_x= MOUSE_VAL_X; //buf[1]=右:指の向きで接点が短いので感度2倍
-    else if( abs((int16_t)buf[0]) > abs(buf[1])) delta_x=-MOUSE_VAL_X; //buf[0]=左:同上
-    if     ( abs((int16_t)buf[3]) > abs(buf[2])) delta_y= MOUSE_VAL_Y; //buf[3]=下
-    else if( abs((int16_t)buf[2]) > abs(buf[3])) delta_y=-MOUSE_VAL_Y; //buf[2]=上
+
+    //マウス有効化中のみ、マウス移動値を検知。
+    if  ( !data->lock ){
+        if     ( abs((int16_t)buf[1]) > abs(buf[0])) delta_x= MOUSE_VAL_X; //buf[1]=右:指の向きで接点が短いので感度2倍
+        else if( abs((int16_t)buf[0]) > abs(buf[1])) delta_x=-MOUSE_VAL_X; //buf[0]=左:同上
+        if     ( abs((int16_t)buf[3]) > abs(buf[2])) delta_y= MOUSE_VAL_Y; //buf[3]=下
+        else if( abs((int16_t)buf[2]) > abs(buf[3])) delta_y=-MOUSE_VAL_Y; //buf[2]=上
+    }
 
     bool  btn_push  = (buf[4] & MSK_SWITCH_STATE) != 0; //true:押下、false:未押下
+
     if ( now - data->last_activity_time < ACCEL_CANCEL_MS ){ //加速度加算・最後の操作あり
       if(( data->pre_x > 0 && delta_x > 0 ) || ( data->pre_x < 0 && delta_x < 0 )) delta_x = data->pre_x * ACCEL_VAL;
       if(( data->pre_y > 0 && delta_y > 0 ) || ( data->pre_y < 0 && delta_y < 0 )) delta_y = data->pre_y * ACCEL_VAL;
@@ -108,6 +124,7 @@ void az1uball_read_data_work(struct k_work *work)
         data->pre_x=delta_x;//前回移動量保存。
         data->pre_y=delta_y;
     }
+
     //マウス操作
     if ( delta_x != 0 || delta_y != 0 || btn_push != data->sw_pressed){
         data->last_activity_time = now; //前回操作時間更新
@@ -117,17 +134,17 @@ void az1uball_read_data_work(struct k_work *work)
     //ボタン押下があれば(レイヤー操作が複雑なのでJのみ)
     if ( btn_push != data->sw_pressed ){
         data->sw_pressed = btn_push;
-        if (data->layer == 0 || data->layer == 1 ) { //スクロールレイヤ
+        if (data->layer == 0 || data->layer == JIG_LAYER ) {
             binding.behavior_dev="key_press";
             binding.param1 = 0x0D; 
             zmk_behavior_invoke_binding(&binding, event, btn_push);  //Jキー扱い
         }
     }
+
     if (data->layer == 2 || data->layer == 4 ) { //スクロールレイヤ
         if (abs(delta_x) > abs(delta_y)) delta_y = 0; else delta_x = 0; //縦 or 横のみ抽出
         binding.behavior_dev="key_press";
         binding.param1 = 0xE0;
-
         if      (delta_y >  1) {
            if (zmk_hid_get_explicit_mods() & 0x02 ){  //左Shift
                zmk_behavior_invoke_binding(&binding, event, 1);
@@ -174,11 +191,11 @@ void az1uball_read_data_work(struct k_work *work)
         }
     }
 
-    //★ジグラーレイヤー:ジグラー操作(Layer1なら、4分ごとに必ず実行・独立)
-    if ( data->layer == 1 && now - data->last_jig_time >= JIG_WAIT_MS ) {
+    //★ジグラーレイヤー:ジグラー操作(一定時間ごとに必ず実行・独立)
+    if ( data->layer == JIG_LAYER && now - data->last_jig_time >= JIG_WAIT_MS ) {
         data->last_jig_time = k_uptime_get();
-        data->direction *= -1;
-        input_report_rel(data->dev, INPUT_REL_X, data->direction * 10, true, K_NO_WAIT);
+        data->jigler_direction *= -1;
+        input_report_rel(data->dev, INPUT_REL_X, data->jigler_direction * 10, true, K_NO_WAIT);
     }
     return;
 }
@@ -196,26 +213,26 @@ static void az1uball_polling(struct k_timer *timer)
     if ( zmk_usb_is_powered() ){
         k_timer_start(&data->polling_timer, NOR_POLL_MS, NOR_POLL_MS);
     }
+
     //高サイクル:キー操作・マウス操作から一定時間以内
     else if ( k_uptime_get() - data->last_activity_time <= BLE_SLEEP_MS ) {
         k_timer_start(&data->polling_timer, NOR_POLL_MS, NOR_POLL_MS);
     }
-    //完全停止：キー割込みでのみ復帰。…多分無意味。ポーリングを生かしてジグラーだけ動作させても、deep sleepが優先された。
-    //else if (data->layer != 1 && k_uptime_get() - data->last_activity_time >= DEEP_SLEEP_MS){
-    //    ;
-    //}
-    //idle時間経過で、超低速ポーリング。※キー操作・マウス操作なしで30秒経過
-    else if (k_uptime_get() - data->last_activity_time >= IDLE_MS){
-        k_timer_start(&data->polling_timer, JIG_POLL_MS, JIG_POLL_MS);
-    }
-    //
-    //低サイクル:else 上記以外(BLE接続、キー・マウス操作から5秒～30秒以内)
-    else{
-        k_timer_start(&data->polling_timer, BLE_POLL_MS, BLE_POLL_MS);
-    }
+
+     //idle時間経過で、超低速ポーリング。※キー操作・マウス操作なしで10秒経過以降
+     else if (k_uptime_get() - data->last_activity_time >= IDLE_MS){
+         k_timer_start(&data->polling_timer, JIG_POLL_MS, JIG_POLL_MS);
+     }
+
+     //低サイクル:else 上記以外(BLE接続、キー・マウス操作から5秒～10秒以内)
+     else{
+         k_timer_start(&data->polling_timer, BLE_POLL_MS, BLE_POLL_MS);
+     }
+
     k_work_submit(&data->work);
-    //last_jig_timeは、更新しない。でないと1回ジグラーが動くごとに、復帰してしまう。(JIG_POLL_MSの継続)
+
     return;
+
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -247,7 +264,8 @@ static int az1uball_init(const struct device *dev)
     data->pre_y=0;
     data->layer=0;
     data->First_flg=false;
-    data->direction=-1;
+    data->lock=false;
+    data->jigler_direction=1;
 
     device_is_ready(config->i2c.bus); //i2c_初期
     i2c_write_dt(&config->i2c, &cmd, sizeof(cmd));
@@ -285,24 +303,17 @@ extern struct az1uball_data az1uball_data_0;
 // #21.割込み検知
 static int az1uball_event_handler(const zmk_event_t *eh)
 {
+    //キー状態に変更がない場合
     const struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
     if (!ev) {
         return 0;
-    }
-    // 押下時    ：低ポーリング中でも、ポーリング。画面描画でFirst_flg=trueへ。(押しっぱなしの繰り返し防止)
-    // リリース時：低ポーリング中でも、ポーリング。次の挙動を保証するため、First_flg=falseに戻す。
-
-    struct az1uball_data *data = &az1uball_data_0;
-    bool is_ESC = (ev->usage_page == 0x07 && ev->keycode    == 0x29);    //USAGE_PAGE_KEYBOARD 0x07,KEY_ESC 0x29
-
-    /* ESC 押下  */
-    if (is_ESC) {
-        data->last_activity_time = k_uptime_get();  //★時間更新する -> 次のポーリングでサイクルは高頻度へリセット。
     }
 
     k_timer_stop(&data->polling_timer);
     k_timer_start(&data->polling_timer, NOR_POLL_MS, NOR_POLL_MS);  //1回はポーリング起動(起点リセット・ESC以外はもう一度超低頻度スタート)
     return 0;
+    //削除済み。
+    //      押下時    ：低ポーリング中でも、ポーリング。画面描画でFirst_flg=trueへ。(押しっぱなしの繰り返し防止)    // リリース時：低ポーリング中でも、ポーリング。次の挙動を保証するため、First_flg=falseに戻す。    //struct az1uball_data *data = &az1uball_data_0;    //bool is_ESC = (ev->usage_page == 0x07 && ev->keycode    == 0x29);    //USAGE_PAGE_KEYBOARD 0x07,KEY_ESC 0x29     // 無効 /* ESC 押下  *///if (is_ESC) {//    data->last_activity_time = k_uptime_get();  //★時間更新する -> 次のポーリングでサイクルは高頻度へリセット。//}
 }
 
 ZMK_LISTENER(az1uball, az1uball_event_handler);
