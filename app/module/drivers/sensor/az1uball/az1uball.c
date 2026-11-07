@@ -53,36 +53,35 @@ void az1uball_read_data_work(struct k_work *work)
     int      layer_active = zmk_keymap_highest_layer_active(); //現レイヤ
     struct az1uball_data *data = CONTAINER_OF(work, struct az1uball_data, work); //az1uball
 
-    if ( data->layer != layer_active ){
-        if ( layer_active == JIG_LAYER ){ // ジグラーON
-            for (int i = 0; i < 5; i++) {
-                input_report_rel(data->dev, INPUT_REL_X, 1, true , K_NO_WAIT);
-                k_sleep(K_MSEC( 5));
-            }
-            for (int i = 0; i < 5; i++) {
-                input_report_rel(data->dev, INPUT_REL_Y, 1, true , K_NO_WAIT);
-                k_sleep(K_MSEC( 5));
-            }
-            for (int i = 0; i < 5; i++) {
-                input_report_rel(data->dev, INPUT_REL_X,-1, true , K_NO_WAIT);
-                k_sleep(K_MSEC( 5));
-            }
-            for (int i = 0; i < 5; i++) {
-                input_report_rel(data->dev, INPUT_REL_Y,-1, true , K_NO_WAIT);
-                k_sleep(K_MSEC( 5));
-            }
-        } else { // ジグラーOFF
-            for (int i = 0; i < 5; i++) {
-                input_report_rel(data->dev, INPUT_REL_X, 1, true , K_NO_WAIT);
-                k_sleep(K_MSEC( 5));
-            }
-            for (int i = 0; i < 5; i++) {
-                input_report_rel(data->dev, INPUT_REL_X,-1, true , K_NO_WAIT);
-                k_sleep(K_MSEC( 5));
-            }
+    if ( data->layer == 2 && layer_active == JIG_LAYER ){ //レイヤ2->
+        for (int i = 0; i < 5; i++) {
+            input_report_rel(data->dev, INPUT_REL_X, 1, true , K_NO_WAIT);
+            k_sleep(K_MSEC( 5));
         }
-        data->layer = layer_active;
+        for (int i = 0; i < 5; i++) {
+            input_report_rel(data->dev, INPUT_REL_Y, 1, true , K_NO_WAIT);
+            k_sleep(K_MSEC( 5));
+        }
+        for (int i = 0; i < 5; i++) {
+            input_report_rel(data->dev, INPUT_REL_X,-1, true , K_NO_WAIT);
+            k_sleep(K_MSEC( 5));
+        }
+        for (int i = 0; i < 5; i++) {
+            input_report_rel(data->dev, INPUT_REL_Y,-1, true , K_NO_WAIT);
+            k_sleep(K_MSEC( 5));
+        }
     }
+    if ( data->layer == 4 && layer_active == 0 ){
+        for (int i = 0; i < 5; i++) {
+            input_report_rel(data->dev, INPUT_REL_X, 1, true , K_NO_WAIT);
+            k_sleep(K_MSEC( 5));
+        }
+        for (int i = 0; i < 5; i++) {
+            input_report_rel(data->dev, INPUT_REL_X,-1, true , K_NO_WAIT);
+            k_sleep(K_MSEC( 5));
+        }
+    }
+    data->layer = layer_active;
     zmk_sleep_inhibit = ( data->layer == JIG_LAYER ); //レイヤー1ならスリープ抑止
 
     const struct az1uball_config *config = data->dev->config; //config
