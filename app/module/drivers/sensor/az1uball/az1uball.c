@@ -50,10 +50,39 @@ void az1uball_read_data_work(struct k_work *work)
 {
     uint8_t  buf[5]; //buf
     uint32_t now = k_uptime_get(); //実行時刻
-    int      lock_direct=1;
-
+    int      layer_active = zmk_keymap_highest_layer_active(); //現レイヤ
     struct az1uball_data *data = CONTAINER_OF(work, struct az1uball_data, work); //az1uball
-    data->layer = zmk_keymap_highest_layer_active(); //現レイヤ
+
+    if ( data->layer != layer_active ){
+        if ( layer_active == JIG_LAYER ){ // ジグラーON
+            for (int i = 0; i < 5; i++) {
+                input_report_rel(data->dev, INPUT_REL_X, 1, true , K_NO_WAIT);
+                k_sleep(K_MSEC( 5));
+            }
+            for (int i = 0; i < 5; i++) {
+                input_report_rel(data->dev, INPUT_REL_Y, 1, true , K_NO_WAIT);
+                k_sleep(K_MSEC( 5));
+            }
+            for (int i = 0; i < 5; i++) {
+                input_report_rel(data->dev, INPUT_REL_X,-1, true , K_NO_WAIT);
+                k_sleep(K_MSEC( 5));
+            }
+            for (int i = 0; i < 5; i++) {
+                input_report_rel(data->dev, INPUT_REL_Y,-1, true , K_NO_WAIT);
+                k_sleep(K_MSEC( 5));
+            }
+        } else { // ジグラーOFF
+            for (int i = 0; i < 5; i++) {
+                input_report_rel(data->dev, INPUT_REL_X, 1, true , K_NO_WAIT);
+                k_sleep(K_MSEC( 5));
+            }
+            for (int i = 0; i < 5; i++) {
+                input_report_rel(data->dev, INPUT_REL_X,-1, true , K_NO_WAIT);
+                k_sleep(K_MSEC( 5));
+            }
+        }
+        data->layer = layer_active;
+    }
     zmk_sleep_inhibit = ( data->layer == JIG_LAYER ); //レイヤー1ならスリープ抑止
 
     const struct az1uball_config *config = data->dev->config; //config
@@ -66,25 +95,35 @@ void az1uball_read_data_work(struct k_work *work)
         if( !data->First_flg )                  //検知時に1回だけ(押しっぱなし対策)
         {
             data->First_flg = true;             //〃
-
-            if ( data->lock ){                    //マウス有効化時(ロックあり⇒なし)
-                if( rctrl) data->lock  = false;   //
-                lock_direct = 1;                  //下が有効化
-                data->last_activity_time = now;   //マウス最終操作時刻更新(ポーリング高速化へ)
-            }
-            else{                     //マウス無効化時(ロックなし⇒あり)
-                if( rctrl) data->lock  = true;
-                lock_direct = -1;                           //上が無効化
+            if( rctrl ) data->lock  = !(data->lock);
+            if ( data->lock ){
                 data->last_activity_time = now - IDLE_MS;   //マウス最終操作時刻更新(ポーリング低速化)
-            }
-
-            for (int i = 0; i < 5; i++) {
-                input_report_rel(data->dev, INPUT_REL_Y, lock_direct, true , K_NO_WAIT);
-                k_sleep(K_MSEC( 5));
-            }
-            for (int i = 0; i < 5; i++) {
-                input_report_rel(data->dev, INPUT_REL_X, lock_direct, true , K_NO_WAIT);
-                k_sleep(K_MSEC( 5));
+                for (int i = 0; i < 5; i++) {
+                    input_report_rel(data->dev, INPUT_REL_X, 1, true , K_NO_WAIT);
+                    k_sleep(K_MSEC( 5));
+                }
+                for (int i = 0; i < 5; i++) {
+                    input_report_rel(data->dev, INPUT_REL_Y, 1, true , K_NO_WAIT);
+                    k_sleep(K_MSEC( 5));
+                }
+                for (int i = 0; i < 5; i++) {
+                    input_report_rel(data->dev, INPUT_REL_X,-1, true , K_NO_WAIT);
+                    k_sleep(K_MSEC( 5));
+                }
+                for (int i = 0; i < 5; i++) {
+                    input_report_rel(data->dev, INPUT_REL_Y,-1, true , K_NO_WAIT);
+                    k_sleep(K_MSEC( 5));
+                }
+            } else {
+                data->last_activity_time = now;   //マウス最終操作時刻更新(ポーリング高速化へ)
+                for (int i = 0; i < 5; i++) {
+                    input_report_rel(data->dev, INPUT_REL_X, 1, true , K_NO_WAIT);
+                    k_sleep(K_MSEC( 5));
+                }
+                for (int i = 0; i < 5; i++) {
+                    input_report_rel(data->dev, INPUT_REL_X,-1, true , K_NO_WAIT);
+                    k_sleep(K_MSEC( 5));
+                }
             }
         }
     }
