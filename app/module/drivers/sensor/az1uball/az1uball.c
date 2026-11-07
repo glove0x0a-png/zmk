@@ -95,7 +95,7 @@ void az1uball_read_data_work(struct k_work *work)
         {
             data->First_flg = true;             //〃
             if( rctrl ) data->lock  = !(data->lock);
-            if ( data->lock ){
+            if ( rctrl && data->lock ){
                 data->last_activity_time = now - IDLE_MS;   //マウス最終操作時刻更新(ポーリング低速化)
                 for (int i = 0; i < 5; i++) {
                     input_report_rel(data->dev, INPUT_REL_X, 1, true , K_NO_WAIT);
