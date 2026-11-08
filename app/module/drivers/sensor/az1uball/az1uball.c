@@ -89,13 +89,14 @@ void az1uball_read_data_work(struct k_work *work)
 
     bool rctrl = zmk_hid_get_explicit_mods() & 0x10; //右Ctrl
     bool lgui  = zmk_hid_get_explicit_mods() & 0x08; //左GUI
+    bool rshft = zmk_hid_get_explicit_mods() & 0x20; //右Shift
 
-    if ( rctrl || lgui ){
+    if ( rctrl || lgui || rshft){
         if( !data->First_flg )                  //検知時に1回だけ(押しっぱなし対策)
         {
             data->First_flg = true;             //〃
-            if( rctrl ) data->lock  = !(data->lock);
-            if ( rctrl && data->lock ){
+            if( rshft ) data->lock  = !(data->lock);
+            if ( rshft && data->lock ){
                 data->last_activity_time = now - IDLE_MS;   //マウス最終操作時刻更新(ポーリング低速化)
                 for (int i = 0; i < 5; i++) {
                     input_report_rel(data->dev, INPUT_REL_X, 1, true , K_NO_WAIT);
@@ -351,12 +352,11 @@ static int az1uball_event_handler(const zmk_event_t *eh)
         return 0;
     }
 
+    //キー状態に変更があれば一度は即時ポーリング
     struct az1uball_data *data = &az1uball_data_0;
     k_timer_stop(&data->polling_timer);
-    k_timer_start(&data->polling_timer, NOR_POLL_MS, NOR_POLL_MS);  //1回はポーリング起動(起点リセット・ESC以外はもう一度超低頻度スタート)
+    k_timer_start(&data->polling_timer, NOR_POLL_MS, NOR_POLL_MS);
     return 0;
-    //削除済み。
-    //      押下時    ：低ポーリング中でも、ポーリング。画面描画でFirst_flg=trueへ。(押しっぱなしの繰り返し防止)    // リリース時：低ポーリング中でも、ポーリング。次の挙動を保証するため、First_flg=falseに戻す。    //struct az1uball_data *data = &az1uball_data_0;    //bool is_ESC = (ev->usage_page == 0x07 && ev->keycode    == 0x29);    //USAGE_PAGE_KEYBOARD 0x07,KEY_ESC 0x29     // 無効 /* ESC 押下  *///if (is_ESC) {//    data->last_activity_time = k_uptime_get();  //★時間更新する -> 次のポーリングでサイクルは高頻度へリセット。//}
 }
 
 ZMK_LISTENER(az1uball, az1uball_event_handler);
